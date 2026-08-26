@@ -1,26 +1,146 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   212 Café
+   Reference points: architecture monographs and hospitality print, not café
+   clip-art. Ink and bone rather than pure black and white; one restrained brass
+   accent; type does the work, gradients do not.
+   --------------------------------------------------------------------------- */
+
+@theme {
+  --color-bone: #f7f4ef;
+  --color-bone-dim: #ece7df;
+  --color-sand: #ddd4c7;
+  --color-clay: #b9a992;
+
+  --color-ink: #14110f;
+  --color-ink-soft: #2a2522;
+  --color-ink-mute: #6b625b;
+
+  --color-brass: #a8834b;
+  --color-brass-lit: #c9a267;
+
+  --color-sky-dusk: #2d3b4a;
+
+  --font-display: var(--font-cormorant), "Cormorant Garamond", "Times New Roman", serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-arabic: var(--font-noto-arabic), "Noto Sans Arabic", sans-serif;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: var(--color-bone);
+  --fg: var(--color-ink);
+  --muted: var(--color-ink-mute);
+  --line: color-mix(in oklab, var(--color-ink) 12%, transparent);
+  --card: #fffdfa;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* The ordering surface and the admin run dark; the marketing site stays light.
+   Scoped by data-surface rather than a media query so it is deliberate. */
+[data-surface="dark"] {
+  --bg: #0f0d0c;
+  --fg: var(--color-bone);
+  --muted: #9a918a;
+  --line: color-mix(in oklab, var(--color-bone) 14%, transparent);
+  --card: #191614;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+[dir="rtl"] body,
+[lang="ar"] body {
+  font-family: var(--font-arabic);
+}
+
+/* Arabic numerals stay Latin in prices so QAR figures read consistently. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+::selection {
+  background: var(--color-brass);
+  color: var(--color-bone);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brass);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* An eyebrow: small, spaced, uppercase. Used sparingly as a section marker. */
+.eyebrow {
+  font-size: 0.6875rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+[dir="rtl"] .eyebrow {
+  letter-spacing: 0;
+}
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 300;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  /* Cormorant defaults to old-style figures, which render "212" as "2I2" — fatal
+     for a brand that IS a number. Force lining figures everywhere in display type. */
+  font-variant-numeric: lining-nums;
+  font-feature-settings: "lnum" 1, "onum" 0;
+}
+
+[dir="rtl"] .display {
+  font-family: var(--font-arabic);
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+/* A hairline that reads as a printed rule rather than a UI divider. */
+.rule {
+  height: 1px;
+  background: var(--line);
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  animation: reveal 0.9s var(--ease-out-soft) forwards;
+}
+
+@keyframes reveal {
+  to { opacity: 1; transform: none; }
+}
+
+/* Hide scrollbars on the horizontal category rail without losing scrollability. */
+.rail {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.rail::-webkit-scrollbar {
+  display: none;
 }

@@ -18,24 +18,81 @@ const decode = (s) => (s || '')
 
 const ARABIC = /[؀-ۿ]/;
 
-// Descriptions are authored as "EN: ... AR: ...". Some omit the AR: marker, so fall
-// back to splitting at the first Arabic character.
+/**
+ * Descriptions are authored as HTML paragraphs:
+ *   <p><strong>EN:</strong> <strong>Classic Americano</strong></p>
+ *   <p>Double shot of rich espresso…</p>
+ *   <p><strong>AR:</strong> <strong>أمريكانو كلاسيك</strong></p>
+ *   <p>شوت مزدوج…</p>
+ *
+ * The bolded line is a TITLE, not prose. Flattening the whole blob produced
+ * "Fresh Homemade Brownie Fresh homemade brownie topped with…" — the title read
+ * twice. So parse paragraph by paragraph and keep the title separate from the body.
+ */
 function splitDesc(raw) {
-  const t = decode(raw);
-  const marker = t.indexOf('AR:');
-  if (marker !== -1) {
-    return {
-      en: t.slice(0, marker).replace(/^EN:\s*/, '').trim(),
-      ar: t.slice(marker + 3).trim(),
-    };
+  const html = raw || '';
+  const blocks = html
+    .split(/<\/p>/i)
+    .map((b) => ({ text: decode(b), bolded: /<strong[^>]*>/i.test(b) }))
+    .filter((b) => b.text);
+
+  if (blocks.length === 0) return { en: '', ar: '', title_en: '', title_ar: '' };
+
+  const out = { en: [], ar: [], title_en: '', title_ar: '' };
+  let lang = 'en';
+
+  for (const b of blocks) {
+    let text = b.text;
+    const isEnMarker = /^EN:/i.test(text);
+    const isArMarker = /^AR:/i.test(text);
+
+    if (isEnMarker) {
+      lang = 'en';
+      text = text.replace(/^EN:\s*/i, '').trim();
+      if (text) out.title_en ||= text;
+      continue;
+    }
+    if (isArMarker) {
+      lang = 'ar';
+      text = text.replace(/^AR:\s*/i, '').trim();
+      if (text) out.title_ar ||= text;
+      continue;
+    }
+
+    // No explicit marker: infer from script so unmarked entries still split.
+    const looksArabic = ARABIC.test(text);
+    if (looksArabic && out.en.length && !out.ar.length) lang = 'ar';
+    else if (!looksArabic && !out.en.length) lang = 'en';
+
+    // A bolded paragraph with no body yet is the title for that language.
+    if (b.bolded && !out[lang].length && !out[`title_${lang}`]) {
+      out[`title_${lang}`] = text;
+      continue;
+    }
+    out[lang].push(text);
   }
-  const stripped = t.replace(/^EN:\s*/, '').trim();
-  const first = stripped.search(ARABIC);
-  if (first === -1) return { en: stripped, ar: '' };
-  // Rewind to the start of the word/sentence the Arabic run begins in.
-  const cut = stripped.lastIndexOf('. ', first);
-  const at = cut === -1 ? first : cut + 2;
-  return { en: stripped.slice(0, at).trim(), ar: stripped.slice(at).trim() };
+
+  const join = (parts) => parts.join(' ').replace(/\s+/g, ' ').trim();
+  let en = join(out.en);
+  let ar = join(out.ar);
+
+  // Fallback: nothing separated cleanly, so use the flattened text.
+  if (!en && !ar) {
+    const flat = decode(html).replace(/^EN:\s*/i, '').trim();
+    const at = flat.search(ARABIC);
+    if (at === -1) en = flat;
+    else {
+      const cut = flat.lastIndexOf('. ', at);
+      const idx = cut === -1 ? at : cut + 2;
+      en = flat.slice(0, idx).trim();
+      ar = flat.slice(idx).trim();
+    }
+  }
+
+  // No de-duplication against the title here: the body is complete prose that often
+  // legitimately opens by naming the dish ("Fresh homemade brownie topped with…").
+  // Stripping that leaves a fragment starting mid-sentence.
+  return { en, ar, title_en: out.title_en, title_ar: out.title_ar };
 }
 
 const items = all.map((p) => {
