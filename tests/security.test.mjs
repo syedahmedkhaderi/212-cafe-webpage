@@ -131,19 +131,37 @@ const stolen = await rpc('get_order_status', {
 check('order NOT readable with wrong token', stolen.body === null,
       JSON.stringify(stolen.body)?.slice(0, 40));
 
-console.log(`\n${pass} passed, ${fail} failed\n`);
-process.exit(fail ? 1 : 0);
 
 // Teardown: these runs create real orders. Cancel them so the demo board is not
 // littered with test data. (Cancelling, not deleting: orders are business records,
 // and `cancelled` is excluded from revenue and from the live board.)
-const cleanup = await fetch(`${URL}/cleanup_test_orders`, {
-  method: 'POST',
-  headers: { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
-  body: JSON.stringify({}),
-});
-if (cleanup.ok) {
-  console.log(`cleanup: ${await cleanup.json()} test order(s) cancelled\n`);
+//
+// Requires a staff login: cleanup_test_orders mutates orders, so it is granted to
+// `authenticated` only — the anon surface stays at exactly three functions.
+const staffPassword = process.env.DEMO_STAFF_PASSWORD;
+if (!staffPassword) {
+  console.log('cleanup: skipped (set DEMO_STAFF_PASSWORD to enable teardown)\n');
 } else {
-  console.log('cleanup: skipped (function not deployed)\n');
+  const auth = await fetch(
+    'https://zdurieneqpgszngplgmb.supabase.co/auth/v1/token?grant_type=password',
+    {
+      method: 'POST',
+      headers: { apikey: KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'owner@212cafe.qa', password: staffPassword }),
+    },
+  );
+  const { access_token } = await auth.json();
+  const cleanup = await fetch(`${URL}/cleanup_test_orders`, {
+    method: 'POST',
+    headers: { apikey: KEY, Authorization: `Bearer ${access_token}`, 'Content-Type': 'application/json' },
+    body: '{}',
+  });
+  console.log(
+    cleanup.ok
+      ? `cleanup: ${await cleanup.json()} test order(s) cancelled\n`
+      : `cleanup: failed (${cleanup.status})\n`,
+  );
 }
+
+console.log(`\n${pass} passed, ${fail} failed\n`);
+process.exit(fail ? 1 : 0);
