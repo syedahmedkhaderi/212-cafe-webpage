@@ -5,10 +5,14 @@ import { getBusiness, getMenu } from '@/lib/menu/queries';
 import { clock, dayName, isOpenNow, money } from '@/lib/format';
 import { HERO_IMAGE, INSTAGRAM_URL, MAPS_URL, VIEW_IMAGES } from '@/lib/site';
 import { SiteFooter, SiteHeader } from '@/components/marketing/SiteChrome';
+import { LanguagePicker } from '@/components/marketing/LanguageSwitch';
 import { SITE_URL } from '@/lib/site-url';
+import { getLocale, hasChosenLocale } from '@/lib/locale-server';
+import { isRTL, translator } from '@/lib/i18n';
+import { localised } from '@/lib/types';
 
-// Short window: the homepage surfaces signature items, so a sold-out signature
-// should drop off quickly. /menu and /order are fully dynamic.
+// Locale comes from a cookie, so this cannot be fully static. A short window also
+// keeps a sold-out signature from lingering.
 export const revalidate = 30;
 
 export const metadata: Metadata = {
@@ -16,9 +20,17 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [{ categories, items }, { settings, hours }] = await Promise.all([getMenu(), getBusiness()]);
+  const [{ categories, items }, { settings, hours }, locale, chosen] = await Promise.all([
+    getMenu(),
+    getBusiness(),
+    getLocale(),
+    hasChosenLocale(),
+  ]);
 
+  const tr = translator(locale);
+  const rtl = isRTL(locale);
   const signatures = items.filter((i) => i.is_signature && i.is_available);
+  const available = items.filter((i) => i.is_available);
   const open = isOpenNow(hours);
   const today = hours.find((h) => h.day_of_week === new Date().getDay());
 
@@ -26,6 +38,7 @@ export default async function HomePage() {
     '@context': 'https://schema.org',
     '@type': 'CafeOrCoffeeShop',
     name: '212 Café',
+    alternateName: '٢١٢ كافيه',
     image: `${SITE_URL}${HERO_IMAGE}`,
     telephone: settings?.phone,
     email: settings?.email,
@@ -53,49 +66,48 @@ export default async function HomePage() {
   };
 
   return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <SiteHeader />
+    <div dir={rtl ? 'rtl' : 'ltr'} lang={locale}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+
+      {/* Offered once, on a visitor's first arrival, then never again. */}
+      {!chosen && <LanguagePicker detected={locale} />}
+
+      <SiteHeader locale={locale} />
 
       <main>
         {/* ---------------------------------------------------------------- hero */}
         <section className="relative min-h-[100svh] w-full overflow-hidden bg-ink">
           <Image
             src={HERO_IMAGE}
-            alt="A 212 signature coffee on the terrace, with the Katara Towers and Lusail Marina behind"
+            alt={
+              rtl
+                ? 'مشروب 212 المميز على التراس، وخلفه أبراج كتارا ومارينا لوسيل'
+                : 'A 212 signature coffee on the terrace, with the Katara Towers and Lusail Marina behind'
+            }
             fill
             priority
             sizes="100vw"
             className="object-cover object-center opacity-85"
           />
-          {/* Legibility scrim. Two layers: a light top wash so the header reads, and a
-              deep bottom ramp that starts above the copy block — the bright sky and pale
-              marble in this photo swallow small text otherwise. */}
-          <div
-            aria-hidden
-            className="absolute inset-0 bg-gradient-to-b from-ink/60 via-transparent to-transparent"
-          />
+          <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-ink/60 via-transparent to-transparent" />
           <div
             aria-hidden
             className="absolute inset-x-0 bottom-0 h-[85%] bg-gradient-to-t from-ink via-ink/88 to-transparent"
           />
 
           <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-6xl flex-col justify-end px-5 pb-16 sm:px-8 sm:pb-24">
-            <p className="eyebrow reveal text-bone/80">Marina Twin Tower A · 30th Floor · Lusail</p>
+            <p className="eyebrow reveal on-photo text-bone/90">{tr('heroLocation')}</p>
 
             <h1 className="display reveal mt-5 text-bone" style={{ animationDelay: '80ms' }}>
-              <span className="block text-[clamp(3.5rem,13vw,9rem)]">Coffee</span>
-              <span className="block text-[clamp(3.5rem,13vw,9rem)] text-brass-lit">above the city</span>
+              <span className="block text-[clamp(3.5rem,13vw,9rem)]">{tr('heroLine1')}</span>
+              <span className="block text-[clamp(3.5rem,13vw,9rem)] text-brass-lit">{tr('heroLine2')}</span>
             </h1>
 
             <p
-              className="reveal mt-7 max-w-md text-[0.95rem] leading-relaxed text-bone/75"
+              className="reveal on-photo mt-7 max-w-md text-[0.95rem] leading-relaxed text-bone/85"
               style={{ animationDelay: '160ms' }}
             >
-              Specialty coffee, desserts and brunch, thirty floors over Lusail Marina.
+              {tr('heroSub')}
             </p>
 
             <div className="reveal mt-9 flex flex-wrap items-center gap-3" style={{ animationDelay: '240ms' }}>
@@ -103,7 +115,7 @@ export default async function HomePage() {
                 href="/menu"
                 className="rounded-full bg-bone px-7 py-3.5 text-[0.78rem] uppercase tracking-[0.14em] text-ink transition-colors hover:bg-brass-lit"
               >
-                Explore the menu
+                {tr('exploreMenu')}
               </Link>
               <a
                 href={MAPS_URL}
@@ -111,21 +123,21 @@ export default async function HomePage() {
                 rel="noreferrer noopener"
                 className="rounded-full border border-bone/40 px-7 py-3.5 text-[0.78rem] uppercase tracking-[0.14em] text-bone transition-colors hover:border-bone hover:bg-bone/10"
               >
-                Find us
+                {tr('findUs')}
               </a>
             </div>
 
             <div
-              className="reveal mt-10 flex items-center gap-2.5 text-[0.8rem] text-bone/70"
+              className="reveal on-photo mt-10 flex items-center gap-2.5 text-[0.8rem] text-bone/85"
               style={{ animationDelay: '320ms' }}
             >
               <span
                 className={`inline-block h-1.5 w-1.5 rounded-full ${open ? 'bg-emerald-400' : 'bg-bone/40'}`}
                 aria-hidden
               />
-              {open ? 'Open now' : 'Closed'}
+              {open ? tr('openNow') : tr('closedNow')}
               {today && !today.is_closed && (
-                <span className="tabular text-bone/50">
+                <span className="tabular text-bone/50" dir="ltr">
                   · {clock(today.opens_at)} – {clock(today.closes_at)}
                 </span>
               )}
@@ -138,17 +150,10 @@ export default async function HomePage() {
           <div className="mx-auto max-w-6xl px-5 sm:px-8">
             <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-20">
               <div>
-                <p className="eyebrow">The View</p>
-                <h2 className="display mt-5 text-[clamp(2.5rem,6vw,4.5rem)]">
-                  Lusail&rsquo;s best view — and we mean it.
-                </h2>
-                <p className="mt-7 max-w-md leading-relaxed text-[var(--muted)]">
-                  From the 30th floor of Marina Twin Tower A, the Katara Towers curve out of the
-                  marina and the Gulf runs to the horizon. Every table is a window seat.
-                </p>
-                <p className="mt-4 max-w-md leading-relaxed text-[var(--muted)]">
-                  It is the reason people come once, and the reason they come back.
-                </p>
+                <p className="eyebrow">{tr('viewEyebrow')}</p>
+                <h2 className="display mt-5 text-[clamp(2.5rem,6vw,4.5rem)]">{tr('viewTitle')}</h2>
+                <p className="mt-7 max-w-md leading-relaxed text-[var(--muted)]">{tr('viewBody1')}</p>
+                <p className="mt-4 max-w-md leading-relaxed text-[var(--muted)]">{tr('viewBody2')}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
@@ -161,7 +166,11 @@ export default async function HomePage() {
                   >
                     <Image
                       src={v.src}
-                      alt={`${v.label}, served on the 212 Café terrace overlooking Lusail Marina`}
+                      alt={
+                        rtl
+                          ? `${v.label} على تراس 212 كافيه بإطلالة على مارينا لوسيل`
+                          : `${v.label}, served on the 212 Café terrace overlooking Lusail Marina`
+                      }
                       fill
                       sizes="(max-width: 1024px) 45vw, 300px"
                       className="object-cover transition-transform duration-700 hover:scale-[1.04]"
@@ -177,40 +186,42 @@ export default async function HomePage() {
         {signatures.length > 0 && (
           <section id="signatures" className="scroll-mt-20 bg-ink py-24 text-bone sm:py-32">
             <div className="mx-auto max-w-6xl px-5 sm:px-8">
-              <p className="eyebrow text-bone/50">Signatures</p>
+              <p className="eyebrow text-bone/50">{tr('signaturesEyebrow')}</p>
               <h2 className="display mt-5 max-w-2xl text-[clamp(2.5rem,6vw,4.5rem)]">
-                What we are known for
+                {tr('signaturesTitle')}
               </h2>
 
               <div className="mt-14 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-                {signatures.map((item) => (
-                  <article key={item.id} className="group">
-                    <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-ink-soft">
-                      {item.image_path && (
-                        <Image
-                          src={item.image_path}
-                          alt={item.name_en}
-                          fill
-                          sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 360px"
-                          className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-                        />
+                {signatures.map((item) => {
+                  const name = localised(item, 'name', locale);
+                  const description = localised(item, 'description', locale);
+                  return (
+                    <article key={item.id} className="group">
+                      <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-ink-soft">
+                        {item.image_path && (
+                          <Image
+                            src={item.image_path}
+                            alt={name}
+                            fill
+                            sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 360px"
+                            className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                          />
+                        )}
+                      </div>
+                      <div className="mt-5 flex items-baseline justify-between gap-4">
+                        <h3 className="display text-2xl">{name}</h3>
+                        <span className="tabular shrink-0 text-sm text-brass-lit" dir="ltr">
+                          {money(item.price)}
+                        </span>
+                      </div>
+                      {description && (
+                        <p className="mt-2.5 text-sm leading-relaxed text-bone/55">
+                          {description.length > 130 ? `${description.slice(0, 130).trimEnd()}…` : description}
+                        </p>
                       )}
-                    </div>
-                    <div className="mt-5 flex items-baseline justify-between gap-4">
-                      <h3 className="display text-2xl">{item.name_en}</h3>
-                      <span className="tabular shrink-0 text-sm text-brass-lit">
-                        {money(item.price)}
-                      </span>
-                    </div>
-                    {item.description_en && (
-                      <p className="mt-2.5 text-sm leading-relaxed text-bone/55">
-                        {item.description_en.length > 130
-                          ? `${item.description_en.slice(0, 130).trimEnd()}…`
-                          : item.description_en}
-                      </p>
-                    )}
-                  </article>
-                ))}
+                    </article>
+                  );
+                })}
               </div>
             </div>
           </section>
@@ -221,22 +232,22 @@ export default async function HomePage() {
           <div className="mx-auto max-w-6xl px-5 sm:px-8">
             <div className="flex flex-wrap items-end justify-between gap-6">
               <div>
-                <p className="eyebrow">The Menu</p>
+                <p className="eyebrow">{tr('menuEyebrow')}</p>
                 <h2 className="display mt-5 text-[clamp(2.5rem,6vw,4.5rem)]">
-                  {items.length} things worth the lift
+                  {available.length} {tr('menuTitle')}
                 </h2>
               </div>
               <Link
                 href="/menu"
                 className="rounded-full border border-ink/20 px-6 py-3 text-[0.75rem] uppercase tracking-[0.14em] transition-colors hover:border-brass hover:text-brass"
               >
-                View full menu
+                {tr('viewFullMenu')}
               </Link>
             </div>
 
             <div className="mt-14 grid gap-px overflow-hidden rounded-sm border border-[var(--line)] bg-[var(--line)] sm:grid-cols-2 lg:grid-cols-3">
               {categories.map((c) => {
-                const inCategory = items.filter((i) => i.category_id === c.id && i.is_available);
+                const inCategory = available.filter((i) => i.category_id === c.id);
                 if (inCategory.length === 0) return null;
                 const from = Math.min(...inCategory.map((i) => i.price));
                 return (
@@ -246,14 +257,23 @@ export default async function HomePage() {
                     className="group flex flex-col justify-between bg-[var(--card)] p-8 transition-colors hover:bg-bone-dim"
                   >
                     <div>
-                      <h3 className="display text-3xl">{c.name_en}</h3>
-                      <p className="mt-2 text-sm text-[var(--muted)]" dir="rtl" lang="ar">
-                        {c.name_ar}
+                      <h3 className="display text-3xl">{localised(c, 'name', locale)}</h3>
+                      {/* the other language, quietly, as a second line */}
+                      <p
+                        className="mt-2 text-sm text-[var(--muted)]"
+                        dir={rtl ? 'ltr' : 'rtl'}
+                        lang={rtl ? 'en' : 'ar'}
+                      >
+                        {rtl ? c.name_en : c.name_ar}
                       </p>
                     </div>
                     <div className="mt-10 flex items-center justify-between text-sm">
-                      <span className="text-[var(--muted)]">{inCategory.length} items</span>
-                      <span className="tabular text-brass">from {money(from)}</span>
+                      <span className="text-[var(--muted)]">
+                        {inCategory.length} {tr('itemsCount')}
+                      </span>
+                      <span className="tabular text-brass">
+                        {tr('from')} <span dir="ltr">{money(from)}</span>
+                      </span>
                     </div>
                   </Link>
                 );
@@ -267,12 +287,10 @@ export default async function HomePage() {
           <div className="mx-auto max-w-6xl px-5 sm:px-8">
             <div className="grid gap-14 lg:grid-cols-2 lg:gap-20">
               <div>
-                <p className="eyebrow text-bone/50">Visit</p>
-                <h2 className="display mt-5 text-[clamp(2.5rem,6vw,4.5rem)]">Thirty floors up</h2>
+                <p className="eyebrow text-bone/50">{tr('visitEyebrow')}</p>
+                <h2 className="display mt-5 text-[clamp(2.5rem,6vw,4.5rem)]">{tr('visitTitle')}</h2>
                 <address className="mt-8 not-italic leading-relaxed text-bone/80">
-                  Marina Twin Tower A<br />
-                  30th Floor<br />
-                  Lusail, Qatar
+                  {settings ? (rtl ? settings.address_ar : settings.address_en) : ''}
                 </address>
                 <div className="mt-8 flex flex-wrap gap-3">
                   <a
@@ -281,11 +299,12 @@ export default async function HomePage() {
                     rel="noreferrer noopener"
                     className="rounded-full bg-bone px-7 py-3.5 text-[0.78rem] uppercase tracking-[0.14em] text-ink transition-colors hover:bg-brass-lit"
                   >
-                    Get directions
+                    {tr('getDirections')}
                   </a>
                   {settings && (
                     <a
                       href={`tel:${settings.phone.replace(/\s/g, '')}`}
+                      dir="ltr"
                       className="tabular rounded-full border border-bone/40 px-7 py-3.5 text-[0.78rem] tracking-[0.06em] transition-colors hover:border-bone hover:bg-bone/10"
                     >
                       {settings.phone}
@@ -295,7 +314,7 @@ export default async function HomePage() {
               </div>
 
               <div>
-                <p className="eyebrow text-bone/50">Hours</p>
+                <p className="eyebrow text-bone/50">{tr('hours')}</p>
                 <ul className="mt-6">
                   {hours.map((h) => {
                     const isToday = h.day_of_week === new Date().getDay();
@@ -306,17 +325,15 @@ export default async function HomePage() {
                           isToday ? 'text-bone' : 'text-bone/55'
                         }`}
                       >
-                        <span>{dayName(h.day_of_week, 'en')}</span>
-                        <span className="tabular">
-                          {h.is_closed ? 'Closed' : `${clock(h.opens_at)} – ${clock(h.closes_at)}`}
+                        <span>{dayName(h.day_of_week, locale)}</span>
+                        <span className="tabular" dir="ltr">
+                          {h.is_closed ? tr('closed') : `${clock(h.opens_at)} – ${clock(h.closes_at)}`}
                         </span>
                       </li>
                     );
                   })}
                 </ul>
-                <p className="mt-5 text-xs text-bone/40">
-                  Hours are managed by the café and update here automatically.
-                </p>
+                <p className="mt-5 text-xs text-bone/40">{tr('hoursNote')}</p>
               </div>
             </div>
           </div>
@@ -324,8 +341,13 @@ export default async function HomePage() {
       </main>
 
       {settings && (
-        <SiteFooter phone={settings.phone} email={settings.email} instagram={settings.instagram} />
+        <SiteFooter
+          locale={locale}
+          phone={settings.phone}
+          email={settings.email}
+          instagram={settings.instagram}
+        />
       )}
-    </>
+    </div>
   );
 }

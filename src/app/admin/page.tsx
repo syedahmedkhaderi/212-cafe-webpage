@@ -78,6 +78,22 @@ function Dashboard({ role, fullName }: { role: string; fullName: string }) {
             <span className="hidden text-[0.75rem] text-[var(--muted)] sm:inline">
               {fullName} · {role}
             </span>
+            {(role === "owner" || role === "admin" || role === "manager") && (
+              <Link
+                href="/admin/tables"
+                className="hidden rounded-full border border-[var(--line)] px-4 py-2 text-[0.75rem] transition-colors hover:border-brass hover:text-brass sm:inline-block"
+              >
+                QR codes
+              </Link>
+            )}
+            {(role === "owner" || role === "admin") && (
+              <Link
+                href="/admin/activity"
+                className="hidden rounded-full border border-[var(--line)] px-4 py-2 text-[0.75rem] transition-colors hover:border-brass hover:text-brass sm:inline-block"
+              >
+                Activity
+              </Link>
+            )}
             <Link
               href="/kitchen"
               className="rounded-full border border-[var(--line)] px-4 py-2 text-[0.75rem] transition-colors hover:border-brass hover:text-brass"

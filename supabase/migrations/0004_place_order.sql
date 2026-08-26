@@ -75,6 +75,11 @@ begin
     raise exception 'invalid_table_token' using errcode = '22023';
   end if;
 
+  -- Abuse guard, checked only after the token is known valid so an invalid token
+  -- cannot be used to fill the rate-limit table. Defined in 0005; plpgsql resolves
+  -- function bodies at call time, so the forward reference is fine.
+  perform public.check_order_rate_limit(p_table_token);
+
   if p_items is null
      or jsonb_typeof(p_items) <> 'array'
      or jsonb_array_length(p_items) = 0

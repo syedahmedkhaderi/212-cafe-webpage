@@ -107,12 +107,23 @@ export function OrderApp({ tableToken, tableLabel, categories, items }: Props) {
       setCartOpen(false);
     } catch (e) {
       // Never surface Postgres text to a guest; log the detail, show a plain sentence.
+      // Throttling is the one case worth distinguishing — "try again" is unhelpful
+      // advice when the answer is "wait a moment".
       console.error('[212] order failed', e);
+      const throttled =
+        typeof e === 'object' && e !== null && 'message' in e &&
+        /rate_limited/.test(String((e as { message: unknown }).message));
+
       setError(
-        t(
-          'We could not send that order. Please try again, or ask a member of staff.',
-          'تعذّر إرسال الطلب. يرجى المحاولة مرة أخرى أو إبلاغ أحد الموظفين.',
-        ),
+        throttled
+          ? t(
+              'That is a lot of orders at once. Please wait a moment and try again.',
+              'تم إرسال طلبات كثيرة في وقت قصير. يرجى الانتظار قليلاً ثم المحاولة مجدداً.',
+            )
+          : t(
+              'We could not send that order. Please try again, or ask a member of staff.',
+              'تعذّر إرسال الطلب. يرجى المحاولة مرة أخرى أو إبلاغ أحد الموظفين.',
+            ),
       );
     } finally {
       setPlacing(false);

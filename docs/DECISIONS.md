@@ -99,9 +99,9 @@ generates, so it cannot reach a genuine order.
 Enable it in Dashboard → Authentication → Policies to check staff passwords against
 HaveIBeenPwned. It needs a dashboard toggle rather than a migration.
 
-**Not yet built (Phase 6):** rate limiting, and audit-log *writes*. The `audit_logs`
-table exists and is RLS-guarded, but nothing writes to it yet — do not claim "every admin
-action is logged" in the pitch until it does.
+**Phase 6 is now built** — see decision 9. Two further functions exist, both invisible
+to clients: `check_order_rate_limit` (granted to nobody; called only from inside
+`place_order`) and `log_audit` (a trigger function).
 
 ## 6. "Extra Milk" and "Extras" are modifiers, not products
 
@@ -114,3 +114,62 @@ Their real prices (QAR 3 and QAR 10) carry over, so nothing is invented.
 
 ⚠️ Modifier prices with **no** counterpart in the source data — Size Large (+6), extra
 espresso shot (+6), syrups (+3) — are proposals. **Confirm with the owner before quoting.**
+
+## 7. Language is a cookie, chosen up front, switchable everywhere
+
+**Decision.** Locale lives in a `212_locale` cookie read server-side. A first-visit
+picker offers English / العربية full-screen; after that a labelled `EN | العربية`
+switcher sits in the header on every page, and again in the footer.
+
+**Why a picker rather than only a toggle.** The café is in Qatar and serves both
+languages. A visitor should not have to recognise a globe icon, or notice a two-letter
+toggle, to read the site in their own language. It appears once — choosing either option
+sets the cookie, so it never interrupts a returning visitor.
+
+**Why a cookie rather than `/ar` routes.** The menu content is already bilingual in the
+database (all 53 items carry an Arabic name), so there is no second set of pages to
+generate. The cost is that pages read cookies and therefore cannot be fully static —
+`/menu` was already `force-dynamic` for availability, and the homepage revalidates.
+
+Before any choice is made, `Accept-Language` decides: a browser asking for `ar` gets
+Arabic immediately.
+
+`<html lang>` and `dir` are set server-side, so direction is correct before any
+JavaScript runs. Prices, phone numbers and order numbers are wrapped `dir="ltr"` so
+Latin runs do not get reordered inside Arabic text.
+
+## 8. Two CSS traps worth remembering
+
+**Cormorant renders `212` as `2I2`.** It defaults to old-style figures, which is fatal
+for a brand that is a number. `.display` forces `lining-nums`.
+
+**Unlayered CSS beats Tailwind utilities.** Tailwind 4 emits utilities into a cascade
+layer; unlayered rules win over layered ones *regardless of specificity*. A bare
+`color: var(--muted)` inside `.eyebrow` therefore silently overrode `text-bone/90` and
+left the hero eyebrow unreadable against the sky. The default now sits inside
+`@layer components`. Text sitting directly on photography also carries `.on-photo`
+(a text shadow), because a scrim gradient cannot be tuned for every viewport height.
+
+## 9. Audit logging and rate limiting live in the database
+
+**Decision.** Audit entries are written by triggers; the order rate limit is checked
+inside `place_order`.
+
+**Why.** An audit trail the client can decline to write is not an audit trail, and a
+rate limit in the browser is a suggestion. Both survive a caller that talks straight to
+PostgREST with the publishable key.
+
+Logged: menu price changes (with before/after), sold-out flips, item create/delete,
+hours and settings edits, staff changes, QR token issue/revoke, and order cancellations.
+Ordinary `received → preparing → ready → served` progression is not logged — it already
+lives in `order_status_history`. No-op updates are skipped so the log stays readable.
+Visible to owners and admins at `/admin/activity`.
+
+Rate limit: **8 orders per table token per minute**, keyed on the token so one abusive
+table cannot block the room. The check runs *after* the token is validated, so an invalid
+token cannot be used to fill the counter table. `order_rate_limit` has RLS enabled and
+**no policy at all** — only `SECURITY DEFINER` functions touch it.
+
+A throttled request returns **HTTP 429**, not 500: the exception uses SQLSTATE `PT429`,
+which PostgREST maps to that status. The ordering app shows "please wait a moment"
+rather than a generic failure. Verified in `tests/audit-ratelimit.test.mjs` (13/13).
