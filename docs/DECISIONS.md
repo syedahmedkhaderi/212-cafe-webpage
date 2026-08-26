@@ -90,9 +90,18 @@ All are covered by `tests/security.test.mjs` (15/15), which attacks them with th
 key: price tampering, cross-item modifiers, guessed and sequential tokens, unavailable
 items, negative quantities, replayed submissions, and reading another guest's order.
 
+A fourth function, `cleanup_test_orders`, exists purely as test teardown. It is granted
+to **`authenticated` only** — never anon — so the anon surface stays at exactly the three
+above. It also only touches `test-%` / `rt-probe-%` idempotency keys, which the app never
+generates, so it cannot reach a genuine order.
+
 **One advisor warning is genuinely outstanding:** *Leaked Password Protection Disabled*.
 Enable it in Dashboard → Authentication → Policies to check staff passwords against
 HaveIBeenPwned. It needs a dashboard toggle rather than a migration.
+
+**Not yet built (Phase 6):** rate limiting, and audit-log *writes*. The `audit_logs`
+table exists and is RLS-guarded, but nothing writes to it yet — do not claim "every admin
+action is logged" in the pitch until it does.
 
 ## 6. "Extra Milk" and "Extras" are modifiers, not products
 
