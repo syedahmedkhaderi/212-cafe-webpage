@@ -1,0 +1,506 @@
+[
+  {
+    "source_id": 2,
+    "sku": "0002",
+    "name_en": "Americano",
+    "path": "/menu/0002-americano.webp",
+    "width": 1199,
+    "height": 1312,
+    "bytes": 186930
+  },
+  {
+    "source_id": 3,
+    "sku": "0003",
+    "name_en": "Tiramisu Latte",
+    "path": "/menu/0003-tiramisu-latte.webp",
+    "width": 1200,
+    "height": 1310,
+    "bytes": 176362
+  },
+  {
+    "source_id": 4,
+    "sku": "0004",
+    "name_en": "Cappucino",
+    "path": "/menu/0004-cappucino.webp",
+    "width": 1200,
+    "height": 1310,
+    "bytes": 176362
+  },
+  {
+    "source_id": 5,
+    "sku": "0005",
+    "name_en": "Chamomile Tea",
+    "path": "/menu/0005-chamomile-tea.webp",
+    "width": 638,
+    "height": 642,
+    "bytes": 46090
+  },
+  {
+    "source_id": 11,
+    "sku": "0011",
+    "name_en": "Green Tea",
+    "path": "/menu/0011-green-tea.webp",
+    "width": 638,
+    "height": 642,
+    "bytes": 46090
+  },
+  {
+    "source_id": 16,
+    "sku": "0016",
+    "name_en": "212-Signature",
+    "path": "/menu/0016-212-signature.webp",
+    "width": 896,
+    "height": 1195,
+    "bytes": 87062
+  },
+  {
+    "source_id": 17,
+    "sku": "0017",
+    "name_en": "Spanish Latte",
+    "path": "/menu/0017-spanish-latte.webp",
+    "width": 1200,
+    "height": 1310,
+    "bytes": 176362
+  },
+  {
+    "source_id": 18,
+    "sku": "0018",
+    "name_en": "Latte",
+    "path": "/menu/0018-latte.webp",
+    "width": 1200,
+    "height": 1310,
+    "bytes": 176362
+  },
+  {
+    "source_id": 19,
+    "sku": "0019",
+    "name_en": "V60",
+    "path": "/menu/0019-v60.webp",
+    "width": 728,
+    "height": 772,
+    "bytes": 26870
+  },
+  {
+    "source_id": 34,
+    "sku": "0034",
+    "name_en": "the 3 Layers",
+    "path": "/menu/0034-the-3-layers.webp",
+    "width": 778,
+    "height": 1374,
+    "bytes": 35558
+  },
+  {
+    "source_id": 39,
+    "sku": "0039",
+    "name_en": "Normal water",
+    "path": "/menu/0039-normal-water.webp",
+    "width": 447,
+    "height": 447,
+    "bytes": 4808
+  },
+  {
+    "source_id": 40,
+    "sku": "0040",
+    "name_en": "Sparkling water",
+    "path": "/menu/0040-sparkling-water.webp",
+    "width": 447,
+    "height": 447,
+    "bytes": 3068
+  },
+  {
+    "source_id": 49,
+    "sku": "0049",
+    "name_en": "Brownies Chocolate Bomb",
+    "path": "/menu/0049-brownies-chocolate-bomb.webp",
+    "width": 896,
+    "height": 1195,
+    "bytes": 78832
+  },
+  {
+    "source_id": 52,
+    "sku": "0052",
+    "name_en": "The French Toast",
+    "path": "/menu/0052-the-french-toast.webp",
+    "width": 1200,
+    "height": 655,
+    "bytes": 70612
+  },
+  {
+    "source_id": 56,
+    "sku": "0056",
+    "name_en": "Turkey Sandwich",
+    "path": "/menu/0056-turkey-sandwich.webp",
+    "width": 1086,
+    "height": 1448,
+    "bytes": 73400
+  },
+  {
+    "source_id": 58,
+    "sku": "0058",
+    "name_en": "Cheese Croissant",
+    "path": "/menu/0058-cheese-croissant.webp",
+    "width": 1200,
+    "height": 1200,
+    "bytes": 3616
+  },
+  {
+    "source_id": 59,
+    "sku": "0059",
+    "name_en": "Chocolate Croissant",
+    "path": "/menu/0059-chocolate-croissant.webp",
+    "width": 1200,
+    "height": 1200,
+    "bytes": 3616
+  },
+  {
+    "source_id": 66,
+    "sku": "0066",
+    "name_en": "Eggs Benedict",
+    "path": "/menu/0066-eggs-benedict.webp",
+    "width": 1200,
+    "height": 655,
+    "bytes": 66956
+  },
+  {
+    "source_id": 67,
+    "sku": "0067",
+    "name_en": "3 Mini Sandwiches",
+    "path": "/menu/0067-3-mini-sandwiches.webp",
+    "width": 1024,
+    "height": 1024,
+    "bytes": 175488
+  },
+  {
+    "source_id": 70,
+    "sku": "0070",
+    "name_en": "Healthy Granola",
+    "path": "/menu/0070-healthy-granola.webp",
+    "width": 896,
+    "height": 689,
+    "bytes": 34366
+  },
+  {
+    "source_id": 75,
+    "sku": "0075",
+    "name_en": "Green Shakshooka",
+    "path": "/menu/0075-green-shakshooka.webp",
+    "width": 1200,
+    "height": 1600,
+    "bytes": 76926
+  },
+  {
+    "source_id": 76,
+    "sku": "0076",
+    "name_en": "Penne Pasta",
+    "path": "/menu/0076-penne-pasta.webp",
+    "width": 1200,
+    "height": 655,
+    "bytes": 58024
+  },
+  {
+    "source_id": 95,
+    "sku": "0095",
+    "name_en": "Ceremonial Matcha Latte",
+    "path": "/menu/0095-ceremonial-matcha-latte.webp",
+    "width": 991,
+    "height": 1088,
+    "bytes": 88836
+  },
+  {
+    "source_id": 101,
+    "sku": "0101",
+    "name_en": "Affogato",
+    "path": "/menu/0101-affogato.webp",
+    "width": 765,
+    "height": 621,
+    "bytes": 33004
+  },
+  {
+    "source_id": 107,
+    "sku": "0107",
+    "name_en": "Double Espresso",
+    "path": "/menu/0107-double-espresso.webp",
+    "width": 1198,
+    "height": 1313,
+    "bytes": 152286
+  },
+  {
+    "source_id": 108,
+    "sku": "0108",
+    "name_en": "English Breakfast Tea",
+    "path": "/menu/0108-english-breakfast-tea.webp",
+    "width": 638,
+    "height": 642,
+    "bytes": 46090
+  },
+  {
+    "source_id": 109,
+    "sku": "0109",
+    "name_en": "Single Espresso",
+    "path": "/menu/0109-single-espresso.webp",
+    "width": 1198,
+    "height": 1313,
+    "bytes": 152286
+  },
+  {
+    "source_id": 110,
+    "sku": "0110",
+    "name_en": "Flat White",
+    "path": "/menu/0110-flat-white.webp",
+    "width": 1200,
+    "height": 1310,
+    "bytes": 176362
+  },
+  {
+    "source_id": 115,
+    "sku": "0115",
+    "name_en": "Non-coffee Matcha",
+    "path": "/menu/0115-non-coffee-matcha.webp",
+    "width": 991,
+    "height": 1088,
+    "bytes": 88836
+  },
+  {
+    "source_id": 120,
+    "sku": "0120",
+    "name_en": "Unique Strawberry Matcha",
+    "path": "/menu/0120-unique-strawberry-matcha.webp",
+    "width": 864,
+    "height": 1217,
+    "bytes": 45004
+  },
+  {
+    "source_id": 132,
+    "sku": "0132",
+    "name_en": "Fresh Orange Juice",
+    "path": "/menu/0132-fresh-orange-juice.webp",
+    "width": 877,
+    "height": 1074,
+    "bytes": 27586
+  },
+  {
+    "source_id": 135,
+    "sku": "0135",
+    "name_en": "Limited Colada",
+    "path": "/menu/0135-limited-colada.webp",
+    "width": 1086,
+    "height": 1448,
+    "bytes": 113930
+  },
+  {
+    "source_id": 143,
+    "sku": "0143",
+    "name_en": "ice tissu cake",
+    "path": "/menu/0143-ice-tissu-cake.webp",
+    "width": 896,
+    "height": 949,
+    "bytes": 52064
+  },
+  {
+    "source_id": 155,
+    "sku": "0155",
+    "name_en": "Halloumi Sandwich",
+    "path": "/menu/0155-halloumi-sandwich.webp",
+    "width": 1200,
+    "height": 941,
+    "bytes": 119520
+  },
+  {
+    "source_id": 157,
+    "sku": "0157",
+    "name_en": "Cheesy Roasted Beef Sandwich",
+    "path": "/menu/0157-cheesy-roasted-beef-sandwich.webp",
+    "width": 1086,
+    "height": 1448,
+    "bytes": 73400
+  },
+  {
+    "source_id": 160,
+    "sku": "0160",
+    "name_en": "Plain Croissant",
+    "path": "/menu/0160-plain-croissant.webp",
+    "width": 1200,
+    "height": 1200,
+    "bytes": 3616
+  },
+  {
+    "source_id": 163,
+    "sku": "0163",
+    "name_en": "Chicken Ceaser Salad",
+    "path": "/menu/0163-chicken-ceaser-salad.webp",
+    "width": 1200,
+    "height": 1566,
+    "bytes": 207540
+  },
+  {
+    "source_id": 175,
+    "sku": "0175",
+    "name_en": "Shakshooka",
+    "path": "/menu/0175-shakshooka.webp",
+    "width": 896,
+    "height": 1200,
+    "bytes": 64962
+  },
+  {
+    "source_id": 201,
+    "sku": "0201",
+    "name_en": "Rocca with Quinoa",
+    "path": "/menu/0201-rocca-with-quinoa.webp",
+    "width": 1200,
+    "height": 1582,
+    "bytes": 211926
+  },
+  {
+    "source_id": 202,
+    "sku": "0202",
+    "name_en": "Barbecue Chicken Sandwich",
+    "path": "/menu/0202-barbecue-chicken-sandwich.webp",
+    "width": 1200,
+    "height": 1011,
+    "bytes": 96378
+  },
+  {
+    "source_id": 203,
+    "sku": "0203",
+    "name_en": "CHEESE CAKE",
+    "path": "/menu/0203-cheese-cake.webp",
+    "width": 896,
+    "height": 944,
+    "bytes": 74276
+  },
+  {
+    "source_id": 204,
+    "sku": "0204",
+    "name_en": "PECAN MELT",
+    "path": "/menu/0204-pecan-melt.webp",
+    "width": 1086,
+    "height": 1448,
+    "bytes": 85774
+  },
+  {
+    "source_id": 205,
+    "sku": "0205",
+    "name_en": "Golden Hive Cake",
+    "path": "/menu/0205-golden-hive-cake.webp",
+    "width": 1195,
+    "height": 896,
+    "bytes": 80026
+  },
+  {
+    "source_id": 206,
+    "sku": "0206",
+    "name_en": "Double D",
+    "path": "/menu/0206-double-d.webp",
+    "width": 960,
+    "height": 949,
+    "bytes": 79108
+  },
+  {
+    "source_id": 207,
+    "sku": "0207",
+    "name_en": "Tuna AVocado",
+    "path": "/menu/0207-tuna-avocado.webp",
+    "width": 1200,
+    "height": 1011,
+    "bytes": 98996
+  },
+  {
+    "source_id": 208,
+    "sku": "0208",
+    "name_en": "Hiby Splash",
+    "path": "/menu/0208-hiby-splash.webp",
+    "width": 1086,
+    "height": 1448,
+    "bytes": 97816
+  },
+  {
+    "source_id": 209,
+    "sku": "0209",
+    "name_en": "Mango Red Horizon",
+    "path": "/menu/0209-mango-red-horizon.webp",
+    "width": 1086,
+    "height": 1448,
+    "bytes": 109880
+  },
+  {
+    "source_id": 210,
+    "sku": "0210",
+    "name_en": "Passion Wave",
+    "path": "/menu/0210-passion-wave.webp",
+    "width": 1086,
+    "height": 1448,
+    "bytes": 110326
+  },
+  {
+    "source_id": 211,
+    "sku": "0211",
+    "name_en": "Sunrise",
+    "path": "/menu/0211-sunrise.webp",
+    "width": 1086,
+    "height": 1448,
+    "bytes": 99268
+  },
+  {
+    "source_id": 212,
+    "sku": "0212",
+    "name_en": "Greek Omlette",
+    "path": "/menu/0212-greek-omlette.webp",
+    "width": 729,
+    "height": 517,
+    "bytes": 43200
+  },
+  {
+    "source_id": 213,
+    "sku": "0213",
+    "name_en": "French Omlette",
+    "path": "/menu/0213-french-omlette.webp",
+    "width": 1024,
+    "height": 1024,
+    "bytes": 139238
+  },
+  {
+    "source_id": 214,
+    "sku": "0214",
+    "name_en": "Creamy Egg with Chicken",
+    "path": "/menu/0214-creamy-egg-with-chicken.webp",
+    "width": 1200,
+    "height": 1066,
+    "bytes": 160228
+  },
+  {
+    "source_id": 216,
+    "sku": "0216",
+    "name_en": "Cortado",
+    "path": "/menu/0216-cortado.webp",
+    "width": 1200,
+    "height": 1169,
+    "bytes": 38932
+  },
+  {
+    "source_id": 217,
+    "sku": "0217",
+    "name_en": "Extra Milk -",
+    "path": "/menu/0217-extra-milk.webp",
+    "width": 1200,
+    "height": 655,
+    "bytes": 56678
+  },
+  {
+    "source_id": 218,
+    "sku": "0218",
+    "name_en": "Extra Milk",
+    "path": "/menu/0218-extra-milk.webp",
+    "width": 1200,
+    "height": 655,
+    "bytes": 56678
+  },
+  {
+    "source_id": 219,
+    "sku": "0219",
+    "name_en": "Extras",
+    "path": "/menu/0219-extras.webp",
+    "width": 1200,
+    "height": 655,
+    "bytes": 77504
+  }
+]

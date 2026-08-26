@@ -1,0 +1,394 @@
+[
+  {
+    "id": 2,
+    "sku": "0002",
+    "name_en": "Americano",
+    "file": "0002-americano.jpeg",
+    "bytes": 254672
+  },
+  {
+    "id": 3,
+    "sku": "0003",
+    "name_en": "Tiramisu Latte",
+    "file": "0003-tiramisu-latte.jpeg",
+    "bytes": 248084
+  },
+  {
+    "id": 4,
+    "sku": "0004",
+    "name_en": "Cappucino",
+    "file": "0004-cappucino.jpeg",
+    "bytes": 248084
+  },
+  {
+    "id": 5,
+    "sku": "0005",
+    "name_en": "Chamomile Tea",
+    "file": "0005-chamomile-tea.jpeg",
+    "bytes": 67753
+  },
+  {
+    "id": 11,
+    "sku": "0011",
+    "name_en": "Green Tea",
+    "file": "0011-green-tea.jpeg",
+    "bytes": 67753
+  },
+  {
+    "id": 16,
+    "sku": "0016",
+    "name_en": "212-Signature",
+    "file": "0016-212-signature.jfif",
+    "bytes": 734735
+  },
+  {
+    "id": 17,
+    "sku": "0017",
+    "name_en": "Spanish Latte",
+    "file": "0017-spanish-latte.jpeg",
+    "bytes": 248084
+  },
+  {
+    "id": 18,
+    "sku": "0018",
+    "name_en": "Latte",
+    "file": "0018-latte.jpeg",
+    "bytes": 248084
+  },
+  {
+    "id": 19,
+    "sku": "0019",
+    "name_en": "V60",
+    "file": "0019-v60.jpeg",
+    "bytes": 280044
+  },
+  {
+    "id": 34,
+    "sku": "0034",
+    "name_en": "the 3 Layers",
+    "file": "0034-the-3-layers.jpeg",
+    "bytes": 65794
+  },
+  {
+    "id": 39,
+    "sku": "0039",
+    "name_en": "Normal water",
+    "file": "0039-normal-water.jpeg",
+    "bytes": 8252
+  },
+  {
+    "id": 40,
+    "sku": "0040",
+    "name_en": "Sparkling water",
+    "file": "0040-sparkling-water.jpeg",
+    "bytes": 5593
+  },
+  {
+    "id": 49,
+    "sku": "0049",
+    "name_en": "Brownies Chocolate Bomb",
+    "file": "0049-brownies-chocolate-bomb.jpeg",
+    "bytes": 117318
+  },
+  {
+    "id": 52,
+    "sku": "0052",
+    "name_en": "The French Toast",
+    "file": "0052-the-french-toast.jpeg",
+    "bytes": 134018
+  },
+  {
+    "id": 56,
+    "sku": "0056",
+    "name_en": "Turkey Sandwich",
+    "file": "0056-turkey-sandwich.jpeg",
+    "bytes": 988209
+  },
+  {
+    "id": 58,
+    "sku": "0058",
+    "name_en": "Cheese Croissant",
+    "file": "0058-cheese-croissant.png",
+    "bytes": 6541
+  },
+  {
+    "id": 59,
+    "sku": "0059",
+    "name_en": "Chocolate Croissant",
+    "file": "0059-chocolate-croissant.png",
+    "bytes": 6541
+  },
+  {
+    "id": 66,
+    "sku": "0066",
+    "name_en": "Eggs Benedict",
+    "file": "0066-eggs-benedict.jpeg",
+    "bytes": 132731
+  },
+  {
+    "id": 67,
+    "sku": "0067",
+    "name_en": "3 Mini Sandwiches",
+    "file": "0067-3-mini-sandwiches.jpeg",
+    "bytes": 214921
+  },
+  {
+    "id": 70,
+    "sku": "0070",
+    "name_en": "Healthy Granola",
+    "file": "0070-healthy-granola.jpeg",
+    "bytes": 61257
+  },
+  {
+    "id": 75,
+    "sku": "0075",
+    "name_en": "Green Shakshooka",
+    "file": "0075-green-shakshooka.jpeg",
+    "bytes": 205487
+  },
+  {
+    "id": 76,
+    "sku": "0076",
+    "name_en": "Penne Pasta",
+    "file": "0076-penne-pasta.jpeg",
+    "bytes": 120738
+  },
+  {
+    "id": 95,
+    "sku": "0095",
+    "name_en": "Ceremonial Matcha Latte",
+    "file": "0095-ceremonial-matcha-latte.jpeg",
+    "bytes": 140572
+  },
+  {
+    "id": 101,
+    "sku": "0101",
+    "name_en": "Affogato",
+    "file": "0101-affogato.jpeg",
+    "bytes": 54183
+  },
+  {
+    "id": 107,
+    "sku": "0107",
+    "name_en": "Double Espresso",
+    "file": "0107-double-espresso.jpeg",
+    "bytes": 227084
+  },
+  {
+    "id": 108,
+    "sku": "0108",
+    "name_en": "English Breakfast Tea",
+    "file": "0108-english-breakfast-tea.jpeg",
+    "bytes": 67753
+  },
+  {
+    "id": 109,
+    "sku": "0109",
+    "name_en": "Single Espresso",
+    "file": "0109-single-espresso.jpeg",
+    "bytes": 227084
+  },
+  {
+    "id": 110,
+    "sku": "0110",
+    "name_en": "Flat White",
+    "file": "0110-flat-white.jpeg",
+    "bytes": 248084
+  },
+  {
+    "id": 115,
+    "sku": "0115",
+    "name_en": "Non-coffee Matcha",
+    "file": "0115-non-coffee-matcha.jpeg",
+    "bytes": 140572
+  },
+  {
+    "id": 120,
+    "sku": "0120",
+    "name_en": "Unique Strawberry Matcha",
+    "file": "0120-unique-strawberry-matcha.png",
+    "bytes": 1751329
+  },
+  {
+    "id": 132,
+    "sku": "0132",
+    "name_en": "Fresh Orange Juice",
+    "file": "0132-fresh-orange-juice.jpeg",
+    "bytes": 57915
+  },
+  {
+    "id": 135,
+    "sku": "0135",
+    "name_en": "Limited Colada",
+    "file": "0135-limited-colada.jpeg",
+    "bytes": 174891
+  },
+  {
+    "id": 143,
+    "sku": "0143",
+    "name_en": "ice tissu cake",
+    "file": "0143-ice-tissu-cake.jpeg",
+    "bytes": 87890
+  },
+  {
+    "id": 155,
+    "sku": "0155",
+    "name_en": "Halloumi Sandwich",
+    "file": "0155-halloumi-sandwich.jpeg",
+    "bytes": 2026888
+  },
+  {
+    "id": 157,
+    "sku": "0157",
+    "name_en": "Cheesy Roasted Beef Sandwich",
+    "file": "0157-cheesy-roasted-beef-sandwich.jpeg",
+    "bytes": 988209
+  },
+  {
+    "id": 160,
+    "sku": "0160",
+    "name_en": "Plain Croissant",
+    "file": "0160-plain-croissant.png",
+    "bytes": 6541
+  },
+  {
+    "id": 163,
+    "sku": "0163",
+    "name_en": "Chicken Ceaser Salad",
+    "file": "0163-chicken-ceaser-salad.jpeg",
+    "bytes": 2072128
+  },
+  {
+    "id": 175,
+    "sku": "0175",
+    "name_en": "Shakshooka",
+    "file": "0175-shakshooka.jpeg",
+    "bytes": 112305
+  },
+  {
+    "id": 201,
+    "sku": "0201",
+    "name_en": "Rocca with Quinoa",
+    "file": "0201-rocca-with-quinoa.jpeg",
+    "bytes": 1294067
+  },
+  {
+    "id": 202,
+    "sku": "0202",
+    "name_en": "Barbecue Chicken Sandwich",
+    "file": "0202-barbecue-chicken-sandwich.jpeg",
+    "bytes": 1414788
+  },
+  {
+    "id": 203,
+    "sku": "0203",
+    "name_en": "CHEESE CAKE",
+    "file": "0203-cheese-cake.jpeg",
+    "bytes": 107555
+  },
+  {
+    "id": 204,
+    "sku": "0204",
+    "name_en": "PECAN MELT",
+    "file": "0204-pecan-melt.jpeg",
+    "bytes": 148820
+  },
+  {
+    "id": 205,
+    "sku": "0205",
+    "name_en": "Golden Hive Cake",
+    "file": "0205-golden-hive-cake.jpeg",
+    "bytes": 127874
+  },
+  {
+    "id": 206,
+    "sku": "0206",
+    "name_en": "Double D",
+    "file": "0206-double-d.jpeg",
+    "bytes": 113433
+  },
+  {
+    "id": 207,
+    "sku": "0207",
+    "name_en": "Tuna AVocado",
+    "file": "0207-tuna-avocado.jpeg",
+    "bytes": 1519126
+  },
+  {
+    "id": 208,
+    "sku": "0208",
+    "name_en": "Hiby Splash",
+    "file": "0208-hiby-splash.jpeg",
+    "bytes": 159052
+  },
+  {
+    "id": 209,
+    "sku": "0209",
+    "name_en": "Mango Red Horizon",
+    "file": "0209-mango-red-horizon.jpeg",
+    "bytes": 175340
+  },
+  {
+    "id": 210,
+    "sku": "0210",
+    "name_en": "Passion Wave",
+    "file": "0210-passion-wave.jpeg",
+    "bytes": 172977
+  },
+  {
+    "id": 211,
+    "sku": "0211",
+    "name_en": "Sunrise",
+    "file": "0211-sunrise.jpeg",
+    "bytes": 165167
+  },
+  {
+    "id": 212,
+    "sku": "0212",
+    "name_en": "Greek Omlette",
+    "file": "0212-greek-omlette.jpeg",
+    "bytes": 266357
+  },
+  {
+    "id": 213,
+    "sku": "0213",
+    "name_en": "French Omlette",
+    "file": "0213-french-omlette.jpeg",
+    "bytes": 180691
+  },
+  {
+    "id": 214,
+    "sku": "0214",
+    "name_en": "Creamy Egg with Chicken",
+    "file": "0214-creamy-egg-with-chicken.jpeg",
+    "bytes": 2129029
+  },
+  {
+    "id": 216,
+    "sku": "0216",
+    "name_en": "Cortado",
+    "file": "0216-cortado.jpeg",
+    "bytes": 82482
+  },
+  {
+    "id": 217,
+    "sku": "0217",
+    "name_en": "Extra Milk -",
+    "file": "0217-extra-milk.png",
+    "bytes": 2032207
+  },
+  {
+    "id": 218,
+    "sku": "0218",
+    "name_en": "Extra Milk",
+    "file": "0218-extra-milk.png",
+    "bytes": 2032207
+  },
+  {
+    "id": 219,
+    "sku": "0219",
+    "name_en": "Extras",
+    "file": "0219-extras.png",
+    "bytes": 2184886
+  }
+]

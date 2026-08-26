@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><base href="https://212.smaresto.com/selforder/">
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Softurn Self Order</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("softurn_selforder_theme");
+          document.documentElement.setAttribute(
+            "data-theme",
+            t === "light" ? "light" : "dark",
+          );
+          document.documentElement.style.colorScheme =
+            t === "light" ? "light" : "dark";
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+        try {
+          var lang = localStorage.getItem("softurn_selforder_lang");
+          if (lang === "ar") {
+            document.documentElement.setAttribute("lang", "ar");
+            document.documentElement.setAttribute("dir", "rtl");
+          } else {
+            document.documentElement.setAttribute("lang", "en");
+            document.documentElement.setAttribute("dir", "ltr");
+          }
+        } catch (e2) {}
+      })();
+    </script>
+    <script type="module" crossorigin src="/selforder/assets/index-CdjF1dzk.js"></script>
+    <link rel="stylesheet" crossorigin href="/selforder/assets/index-DPMZIIal.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
