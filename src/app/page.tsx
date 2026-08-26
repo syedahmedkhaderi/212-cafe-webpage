@@ -5,8 +5,11 @@ import { getBusiness, getMenu } from '@/lib/menu/queries';
 import { clock, dayName, isOpenNow, money } from '@/lib/format';
 import { HERO_IMAGE, INSTAGRAM_URL, MAPS_URL, VIEW_IMAGES } from '@/lib/site';
 import { SiteFooter, SiteHeader } from '@/components/marketing/SiteChrome';
+import { SITE_URL } from '@/lib/site-url';
 
-export const revalidate = 300;
+// Short window: the homepage surfaces signature items, so a sold-out signature
+// should drop off quickly. /menu and /order are fully dynamic.
+export const revalidate = 30;
 
 export const metadata: Metadata = {
   alternates: { canonical: '/' },
@@ -23,7 +26,7 @@ export default async function HomePage() {
     '@context': 'https://schema.org',
     '@type': 'CafeOrCoffeeShop',
     name: '212 Café',
-    image: `https://212-demo.vercel.app${HERO_IMAGE}`,
+    image: `${SITE_URL}${HERO_IMAGE}`,
     telephone: settings?.phone,
     email: settings?.email,
     priceRange: 'QAR 50–100',
@@ -46,7 +49,7 @@ export default async function HomePage() {
         closes: h.closes_at,
       })),
     sameAs: [INSTAGRAM_URL],
-    hasMenu: 'https://212-demo.vercel.app/menu',
+    hasMenu: `${SITE_URL}/menu`,
   };
 
   return (

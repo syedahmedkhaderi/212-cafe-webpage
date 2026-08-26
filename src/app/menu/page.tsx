@@ -4,7 +4,9 @@ import { getBusiness, getMenu } from '@/lib/menu/queries';
 import { MenuBrowser } from '@/components/marketing/MenuBrowser';
 import { SiteFooter } from '@/components/marketing/SiteChrome';
 
-export const revalidate = 300;
+// No ISR: marking an item sold out in admin must show here on the guest's next load,
+// not up to five minutes later. The menu is small and served from cache at the edge.
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Menu',

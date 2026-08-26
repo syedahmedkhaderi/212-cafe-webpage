@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Cormorant_Garamond, Inter, Noto_Sans_Arabic } from 'next/font/google';
 import './globals.css';
+import { SITE_URL } from '@/lib/site-url';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -22,7 +23,7 @@ const notoArabic = Noto_Sans_Arabic({
   display: 'swap',
 });
 
-const SITE = 'https://212-demo.vercel.app';
+const SITE = SITE_URL;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),

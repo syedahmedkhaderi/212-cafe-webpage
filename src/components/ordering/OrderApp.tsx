@@ -25,6 +25,7 @@ type Props = {
 };
 
 const STORAGE = (token: string) => `212.cart.${token}`;
+const PLACED_STORAGE = (token: string) => `212.placed.${token}`;
 
 export function OrderApp({ tableToken, tableLabel, categories, items }: Props) {
   const [locale, setLocale] = useState<Locale>('en');
@@ -38,15 +39,28 @@ export function OrderApp({ tableToken, tableLabel, categories, items }: Props) {
   const rtl = locale === 'ar';
   const t = (en: string, ar: string) => (rtl ? ar : en);
 
-  // Restore an in-progress cart if the guest reloads or their screen locks.
+  // Restore an in-progress cart, and any order already placed from this table, if the
+  // guest reloads or iOS discards the tab. Losing the tracker mid-order is the worst
+  // moment for it to happen.
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE(tableToken));
       if (saved) setCart(JSON.parse(saved));
+      const savedPlaced = localStorage.getItem(PLACED_STORAGE(tableToken));
+      if (savedPlaced) setPlaced(JSON.parse(savedPlaced));
     } catch {
       /* private mode or blocked storage — start empty, no user-visible failure */
     }
   }, [tableToken]);
+
+  useEffect(() => {
+    try {
+      if (placed) localStorage.setItem(PLACED_STORAGE(tableToken), JSON.stringify(placed));
+      else localStorage.removeItem(PLACED_STORAGE(tableToken));
+    } catch {
+      /* ignore */
+    }
+  }, [placed, tableToken]);
 
   useEffect(() => {
     try {
@@ -595,9 +609,14 @@ function OrderPlaced({
           {t('Table', 'طاولة')} {tableLabel}
         </p>
         <h1 className="display mt-3 text-5xl">{t('Thank you', 'شكراً لك')}</h1>
-        <p className="tabular mt-3 text-[var(--muted)]">
-          {t('Order', 'طلب')} <span className="text-brass-lit">{orderNumber}</span>
-          {total !== null && <span className="ms-2">· {money(total)}</span>}
+        {/* Order number and price are Latin runs; isolating them with dir="ltr" keeps
+            the bidi separator from colliding with the number in Arabic. */}
+        <p className="mt-3 text-[var(--muted)]">
+          {t('Order', 'طلب')}{' '}
+          <span className="tabular inline-flex gap-2" dir="ltr">
+            <span className="text-brass-lit">{orderNumber}</span>
+            {total !== null && <span>· {money(total)}</span>}
+          </span>
         </p>
 
         <ol className="mt-10 space-y-0">

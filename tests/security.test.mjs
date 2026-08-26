@@ -133,3 +133,17 @@ check('order NOT readable with wrong token', stolen.body === null,
 
 console.log(`\n${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);
+
+// Teardown: these runs create real orders. Cancel them so the demo board is not
+// littered with test data. (Cancelling, not deleting: orders are business records,
+// and `cancelled` is excluded from revenue and from the live board.)
+const cleanup = await fetch(`${URL}/cleanup_test_orders`, {
+  method: 'POST',
+  headers: { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
+  body: JSON.stringify({}),
+});
+if (cleanup.ok) {
+  console.log(`cleanup: ${await cleanup.json()} test order(s) cancelled\n`);
+} else {
+  console.log('cleanup: skipped (function not deployed)\n');
+}

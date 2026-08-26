@@ -2,7 +2,11 @@
 // and that a kitchen-role account cannot do manager-only things.
 const URL = 'https://zdurieneqpgszngplgmb.supabase.co';
 const KEY = 'sb_publishable_UnXoDqpHVPaRMZ9xUo5JKQ_7MM8E8gZ';
-const PW = 'REDACTED_ROTATED';
+const PW = process.env.DEMO_STAFF_PASSWORD;
+if (!PW) {
+  console.error("Set DEMO_STAFF_PASSWORD to run this test. It is deliberately not committed.");
+  process.exit(2);
+}
 
 const login = async (email) => {
   const res = await fetch(`${URL}/auth/v1/token?grant_type=password`, {

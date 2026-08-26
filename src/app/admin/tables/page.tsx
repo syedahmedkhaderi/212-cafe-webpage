@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { AdminShell, SignOutButton } from '@/components/admin/AdminShell';
 import { getBrowserClient } from '@/lib/supabase/client';
+import { SITE_URL, isLocalOrigin, orderUrl } from '@/lib/site-url';
 
 type TableRow = {
   id: string;
@@ -26,9 +27,6 @@ export default function TablesPage() {
 function Tables() {
   const [rows, setRows] = useState<TableRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [origin, setOrigin] = useState('');
-
-  useEffect(() => setOrigin(window.location.origin), []);
 
   const load = useCallback(async () => {
     const supabase = getBrowserClient();
@@ -42,13 +40,12 @@ function Tables() {
       ((tokens.data ?? []) as { token: string; table_id: string }[]).map((t) => [t.table_id, t.token]),
     );
 
-    const base = window.location.origin;
     const shaped: TableRow[] = await Promise.all(
       ((tables.data ?? []) as Omit<TableRow, 'token' | 'qr'>[]).map(async (t) => {
         const token = tokenByTable.get(t.id) ?? null;
         let qr: string | null = null;
         if (token) {
-          qr = await QRCode.toDataURL(`${base}/order/${token}`, {
+          qr = await QRCode.toDataURL(orderUrl(token), {
             width: 512,
             margin: 1,
             color: { dark: '#14110f', light: '#ffffff' },
@@ -113,6 +110,19 @@ function Tables() {
           who scans it lands straight in the ordering app — no app to install, no account.
         </p>
 
+        {/* A QR built against localhost is unreachable from a phone. Say so loudly
+            rather than letting someone print a sheet of dead codes. */}
+        {isLocalOrigin && (
+          <p
+            role="alert"
+            className="mt-5 max-w-lg rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-[0.82rem] text-amber-200 print:hidden"
+          >
+            These codes point at <span className="tabular">{SITE_URL}</span>, which a phone
+            cannot reach. Set <span className="tabular">NEXT_PUBLIC_SITE_URL</span> to the
+            deployed origin before printing.
+          </p>
+        )}
+
         {loading && <p className="mt-8 text-sm text-[var(--muted)]">Loading…</p>}
 
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -143,7 +153,7 @@ function Tables() {
 
               <div className="mt-4 print:hidden">
                 <p className="tabular truncate text-[0.62rem] text-[var(--muted)]/70">
-                  {t.token ? `${origin}/order/${t.token.slice(0, 10)}…` : '—'}
+                  {t.token ? `${SITE_URL}/order/${t.token.slice(0, 10)}…` : '—'}
                 </p>
                 <button
                   type="button"
