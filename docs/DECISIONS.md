@@ -70,7 +70,31 @@ so it was not exploitable — but the endpoint had no reason to exist. Supabase'
 advisor went from 8 warnings to 0. Policy expressions still work because `anon` and
 `authenticated` hold `EXECUTE` on the schema's functions.
 
-## 5. "Extra Milk" and "Extras" are modifiers, not products
+## 5. Three anon-callable `SECURITY DEFINER` functions are intentional
+
+Supabase's security advisor flags `place_order`, `get_order_status` and
+`resolve_table_token` as "Public Can Execute SECURITY DEFINER Function". **These
+warnings are expected and must not be "fixed".** They are the app's entire public API,
+and each carries its own guard:
+
+| Function | Guard |
+| --- | --- |
+| `place_order` | Validates the table token, reads real prices from the menu, enforces modifier rules, requires an idempotency key |
+| `get_order_status` | Requires the order number **and** its 128-bit session token |
+| `resolve_table_token` | Returns only a table label, and only for a token the caller already holds |
+
+The contrast with the helpers moved in decision 4 is the point: those were flagged for
+the same lint but had no reason to be reachable at all. These three do.
+
+All are covered by `tests/security.test.mjs` (15/15), which attacks them with the anon
+key: price tampering, cross-item modifiers, guessed and sequential tokens, unavailable
+items, negative quantities, replayed submissions, and reading another guest's order.
+
+**One advisor warning is genuinely outstanding:** *Leaked Password Protection Disabled*.
+Enable it in Dashboard → Authentication → Policies to check staff passwords against
+HaveIBeenPwned. It needs a dashboard toggle rather than a migration.
+
+## 6. "Extra Milk" and "Extras" are modifiers, not products
 
 **Decision.** Three of the 56 crawled products are excluded from `menu_items` and
 re-created as modifier options.
