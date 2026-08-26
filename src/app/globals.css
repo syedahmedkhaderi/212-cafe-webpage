@@ -19,6 +19,9 @@
 
   --color-brass: #a8834b;
   --color-brass-lit: #c9a267;
+  /* 5.03:1 on the light card — the lighter brass is only 3.44:1, which fails WCAG AA
+     for body-size text. Use this wherever small brass text sits on a light surface. */
+  --color-brass-ink: #8a6836;
 
   --color-sky-dusk: #2d3b4a;
 

@@ -16,19 +16,29 @@ import {
   validateSelection,
 } from '@/lib/order/cart';
 import { getBrowserClient } from '@/lib/supabase/client';
+import { persistLocale } from '@/lib/locale-client';
 
 type Props = {
   tableToken: string;
   tableLabel: string;
   categories: MenuCategory[];
   items: MenuItem[];
+  /** Resolved server-side from the shared locale cookie. */
+  initialLocale: Locale;
 };
 
 const STORAGE = (token: string) => `212.cart.${token}`;
 const PLACED_STORAGE = (token: string) => `212.placed.${token}`;
 
-export function OrderApp({ tableToken, tableLabel, categories, items }: Props) {
-  const [locale, setLocale] = useState<Locale>('en');
+export function OrderApp({ tableToken, tableLabel, categories, items, initialLocale }: Props) {
+  const [locale, setLocale] = useState<Locale>(initialLocale);
+
+  // Toggling here writes the same cookie the marketing site reads, so the choice
+  // follows the guest back out to the menu rather than living only in this tab.
+  const changeLocale = (next: Locale) => {
+    setLocale(next);
+    persistLocale(next);
+  };
   const [cart, setCart] = useState<CartLine[]>([]);
   const [sheetItem, setSheetItem] = useState<MenuItem | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -157,7 +167,7 @@ export function OrderApp({ tableToken, tableLabel, categories, items }: Props) {
           </div>
           <button
             type="button"
-            onClick={() => setLocale(rtl ? 'en' : 'ar')}
+            onClick={() => changeLocale(rtl ? 'en' : 'ar')}
             className="rounded-full border border-[var(--line)] px-3 py-1.5 text-[0.72rem] transition-colors hover:border-brass hover:text-brass"
           >
             {rtl ? 'EN' : 'ع'}

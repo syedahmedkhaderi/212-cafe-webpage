@@ -17,25 +17,62 @@ See [`data/FINDINGS.md`](data/FINDINGS.md).
 | `/menu` | Public | Full bilingual menu, EN/AR with correct RTL |
 | `/order/[tableToken]` | Guest | Scan-to-order: browse, configure, cart, submit, track |
 | `/admin` | Staff | Live orders, today's revenue, top items, sold-out toggles |
+| `/admin/activity` | Owner/admin | Audit trail of every menu, hours, staff and token change |
 | `/admin/tables` | Manager+ | Printable QR codes, token rotation |
 | `/kitchen` | Kitchen | Three-column display: New → Preparing → Ready |
 
 ## Running it
 
 ```bash
-cp .env.example .env.local     # fill in your Supabase URL + publishable key
-npm install
-npm run dev
+./setup.sh          # deps, .env.local, then verifies the database is reachable and seeded
+./start.sh          # build and serve
 ```
+
+`./start.sh dev` for hot reload, `./start.sh test` for the verification suites,
+`./start.sh reset` to clear the order board and re-seed a believable demo set.
 
 Database migrations are in `supabase/migrations/`, applied in filename order.
 `0003_seed.sql` is generated — regenerate with `node data/generate-seed.mjs`.
+
+**Set `NEXT_PUBLIC_SITE_URL` to the deployed origin before printing QR codes.**
+Codes generated against localhost cannot be scanned from a phone; `/admin/tables`
+shows a warning banner when that is the case.
 
 ### Demo logins
 
 `owner@212cafe.qa` (role: owner) and `kitchen@212cafe.qa` (role: kitchen).
 **These are demo credentials seeded for the pitch — change or remove them before
 this goes anywhere real.**
+
+## Languages
+
+English and Arabic, switchable everywhere. A full-screen picker appears once on a
+visitor's first arrival; after that a labelled `EN | العربية` control sits in the header
+of every page and in the footer. The choice is a cookie, so it carries across the
+marketing site, the menu **and the table-ordering app** — a guest who picks العربية and
+then scans a QR stays in Arabic.
+
+Before any choice is made, `Accept-Language` decides. `<html lang>` and `dir` are set
+server-side, so direction is right before any JavaScript runs, and prices, phone numbers
+and order numbers stay left-to-right inside Arabic text.
+
+Item names and descriptions are the café's own Arabic — all 53 items carry an Arabic
+name, 34 an Arabic description.
+
+## Measured
+
+Lighthouse, mobile, against a production build:
+
+| | Homepage | Ordering app |
+| --- | --- | --- |
+| Performance | 94 | 87 |
+| Accessibility | 100 | 100 |
+| Best practices | 100 | 100 |
+| SEO | 100 | — |
+
+LCP 3.1 s, CLS 0, 483 KB total on the homepage. The Arabic webfont is not preloaded —
+it was 163 KB shipped to every English visitor — so it is fetched only when Arabic is
+actually rendered.
 
 ## Security posture
 
@@ -51,11 +88,19 @@ public. Everything it can do is bounded by RLS and three guarded database functi
 - Idempotency keys make a double-tap on flaky wifi return the first order, not a second.
 - Role separation: owner / admin / manager / staff / kitchen.
 
+- Audit logging and the order rate limit are enforced by the database, not the app.
+
 ```bash
-node tests/security.test.mjs     # 15 adversarial checks with the anon key
-node tests/staff-rls.test.mjs    # role separation
-node tests/realtime-rls.test.mjs # proves anon receives no order events
+./start.sh test                            # security, roles, audit + rate limit
+
+# browser suites — need the app running
+node tests/arabic-site.test.mjs             # language switching across every surface
+node tests/live-demo.test.mjs               # the pitch choreography, end to end
+node tests/rtl-availability-fidelity.test.mjs
+./start.sh reset                            # tidy the board afterwards
 ```
+
+87 assertions in total, all passing.
 
 Design and architecture rationale, including what was measured rather than assumed,
 is in [`docs/DECISIONS.md`](docs/DECISIONS.md).

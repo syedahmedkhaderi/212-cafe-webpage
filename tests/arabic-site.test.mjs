@@ -99,6 +99,47 @@ for (const [name, page] of [['ar', p2]]) {
   check(`${name}: no horizontal overflow`, !overflow);
 }
 
+/* ------------------------------------------ 7. the ordering app inherits it ----- */
+// The discriminating check: set the cookie, navigate STRAIGHT to a table QR URL, and
+// assert Arabic with zero clicks. Earlier versions of this suite never visited /order,
+// and the RTL suite reached Arabic by clicking the ordering app's own toggle — so both
+// passed while an Arabic guest scanning a QR still landed in English.
+console.log('\n=== 7. Ordering app inherits the site language ===');
+
+const TABLE_TOKEN = process.env.DEMO_TABLE_TOKEN;
+if (!TABLE_TOKEN) {
+  console.log('  SKIP  set DEMO_TABLE_TOKEN to check the ordering surface');
+} else {
+  const guest = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  await guest.addCookies([
+    { name: '212_locale', value: 'ar', url: BASE },
+  ]);
+  const g = await guest.newPage();
+  await g.goto(`${BASE}/order/${TABLE_TOKEN}`, { waitUntil: 'load' });
+  await g.waitForTimeout(1500);
+
+  const dir = await g.evaluate(() => document.querySelector('[data-surface]')?.getAttribute('dir'));
+  const heading = await g.locator('h1').first().innerText();
+  const gBody = await g.locator('body').innerText();
+
+  check('ordering app is RTL with no clicks', dir === 'rtl', `dir=${dir}`);
+  check('greeting is Arabic', /أهلاً بك/.test(heading), heading);
+  check('table label is Arabic', /طاولة/.test(gBody));
+  check('category rail is Arabic', /مشروبات ساخنة/.test(gBody));
+  await g.screenshot({ path: `${OUT}/ar-site-4-order.png` });
+
+  // and an English cookie must give English, no clicks either
+  const en = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  await en.addCookies([{ name: '212_locale', value: 'en', url: BASE }]);
+  const e = await en.newPage();
+  await e.goto(`${BASE}/order/${TABLE_TOKEN}`, { waitUntil: 'load' });
+  await e.waitForTimeout(1200);
+  check(
+    'English cookie gives the English ordering app',
+    /Good to see you/.test(await e.locator('body').innerText()),
+  );
+}
+
 console.log(`\n${pass} passed, ${fail} failed\n`);
 await browser.close();
 process.exit(fail ? 1 : 0);

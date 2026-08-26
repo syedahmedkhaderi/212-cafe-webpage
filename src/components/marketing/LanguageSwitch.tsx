@@ -2,20 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useCallback, useState, useTransition } from 'react';
-import { LOCALE_COOKIE } from '@/lib/i18n';
 import type { Locale } from '@/lib/types';
-
-const ONE_YEAR = 60 * 60 * 24 * 365;
-
-function persist(locale: Locale) {
-  document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=${ONE_YEAR}; samesite=lax`;
-  // Keep the ordering app (which holds locale in React state) in step.
-  try {
-    localStorage.setItem('212.locale', locale);
-  } catch {
-    /* private mode — the cookie is the source of truth anyway */
-  }
-}
+import { persistLocale as persist } from '@/lib/locale-client';
 
 export function useLocaleSwitch(current: Locale) {
   const router = useRouter();

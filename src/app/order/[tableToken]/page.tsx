@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { getMenu } from '@/lib/menu/queries';
 import { resolveTableToken } from '@/lib/order/table';
 import { OrderApp } from '@/components/ordering/OrderApp';
+import { getLocale } from '@/lib/locale-server';
 
 // A guest's table page must never be cached or prerendered: availability changes
 // while they are sitting there.
@@ -25,7 +26,9 @@ export default async function TableOrderPage({
   const table = await resolveTableToken(tableToken);
   if (!table) notFound();
 
-  const { categories, items } = await getMenu();
+  // Same cookie as the marketing site: a guest who chose العربية there stays in
+  // Arabic after scanning the QR, with no second choice to make.
+  const [{ categories, items }, locale] = await Promise.all([getMenu(), getLocale()]);
 
   return (
     <OrderApp
@@ -33,6 +36,7 @@ export default async function TableOrderPage({
       tableLabel={table.label}
       categories={categories}
       items={items}
+      initialLocale={locale}
     />
   );
 }

@@ -88,7 +88,12 @@ const setAvailable = async (name, value) => {
   });
 };
 
-const menuPage = await ctx.newPage();
+// A fresh context, pinned to English. Part 1 toggles the ordering app into Arabic,
+// and that toggle now writes the SHARED locale cookie — so reusing that context would
+// render /menu in Arabic and look for an English item name that is not there.
+const enCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+await enCtx.addCookies([{ name: '212_locale', value: 'en', url: BASE }]);
+const menuPage = await enCtx.newPage();
 await menuPage.goto(`${BASE}/menu`, { waitUntil: 'load' });
 await menuPage.waitForTimeout(1000);
 const before = await menuPage.getByText('Eggs Benedict', { exact: true }).count();
@@ -101,7 +106,7 @@ const after = await menuPage.getByText('Eggs Benedict', { exact: true }).count()
 check('hidden from /menu on next load (no 5-min wait)', after === 0, `count=${after}`);
 
 // and the guest can no longer order it
-const orderPage = await ctx.newPage();
+const orderPage = await enCtx.newPage();
 await orderPage.goto(`${BASE}/order/${TOKEN}`, { waitUntil: 'load' });
 await orderPage.waitForTimeout(1200);
 const inOrder = await orderPage.getByText('Eggs Benedict', { exact: true }).count();

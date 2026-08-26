@@ -5,6 +5,7 @@
 #   ./start.sh          production build, then serve
 #   ./start.sh dev      development server with hot reload
 #   ./start.sh test     run the verification suites against the live project
+#   ./start.sh reset    clear the order board and re-seed a believable demo set
 #
 # Assumes ./setup.sh has been run at least once.
 
@@ -50,15 +51,23 @@ case "$MODE" in
   test)
     printf "\n%s  Verification suites%s\n\n" "$bold" "$off"
     FAILED=0
-    for suite in tests/security.test.mjs tests/staff-rls.test.mjs; do
+    for suite in tests/security.test.mjs tests/staff-rls.test.mjs tests/audit-ratelimit.test.mjs; do
       printf "  %s%s%s\n" "$bold" "$suite" "$off"
       node "$suite" || FAILED=1
     done
     printf "\n  %sBrowser suites need the app running — start it, then:%s\n" "$dim" "$off"
     printf "    node tests/live-demo.test.mjs\n"
-    printf "    node tests/rtl-availability-fidelity.test.mjs\n\n"
+    printf "    node tests/rtl-availability-fidelity.test.mjs\n"
+    printf "    node tests/arabic-site.test.mjs\n"
+    printf "\n  %sThose place real orders. Tidy the board afterwards with ./start.sh reset.%s\n\n" "$dim" "$off"
     [ "$FAILED" -eq 0 ] || die "A suite failed."
     printf "  %s✓%s All non-browser suites passed.\n\n" "$green" "$off"
+    ;;
+
+  reset)
+    printf "\n%s  Resetting the demo board%s\n\n" "$bold" "$off"
+    node scripts/reset-demo-board.mjs
+    printf "\n"
     ;;
 
   prod|*)

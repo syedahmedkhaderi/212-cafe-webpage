@@ -11,9 +11,10 @@ import { getLocale, hasChosenLocale } from '@/lib/locale-server';
 import { isRTL, translator } from '@/lib/i18n';
 import { localised } from '@/lib/types';
 
-// Locale comes from a cookie, so this cannot be fully static. A short window also
-// keeps a sold-out signature from lingering.
-export const revalidate = 30;
+// Reading the locale cookie already forces dynamic rendering, so this is explicit
+// rather than relying on a revalidate window that would never apply. Availability and
+// language are both per-request.
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   alternates: { canonical: '/' },
@@ -239,7 +240,7 @@ export default async function HomePage() {
               </div>
               <Link
                 href="/menu"
-                className="rounded-full border border-ink/20 px-6 py-3 text-[0.75rem] uppercase tracking-[0.14em] transition-colors hover:border-brass hover:text-brass"
+                className="rounded-full border border-ink/20 px-6 py-3 text-[0.75rem] uppercase tracking-[0.14em] transition-colors hover:border-brass hover:text-brass-ink"
               >
                 {tr('viewFullMenu')}
               </Link>
@@ -271,7 +272,7 @@ export default async function HomePage() {
                       <span className="text-[var(--muted)]">
                         {inCategory.length} {tr('itemsCount')}
                       </span>
-                      <span className="tabular text-brass">
+                      <span className="tabular text-brass-ink">
                         {tr('from')} <span dir="ltr">{money(from)}</span>
                       </span>
                     </div>
@@ -287,7 +288,7 @@ export default async function HomePage() {
           <div className="mx-auto max-w-6xl px-5 sm:px-8">
             <div className="grid gap-14 lg:grid-cols-2 lg:gap-20">
               <div>
-                <p className="eyebrow text-bone/50">{tr('visitEyebrow')}</p>
+                <p className="eyebrow text-bone/75">{tr('visitEyebrow')}</p>
                 <h2 className="display mt-5 text-[clamp(2.5rem,6vw,4.5rem)]">{tr('visitTitle')}</h2>
                 <address className="mt-8 not-italic leading-relaxed text-bone/80">
                   {settings ? (rtl ? settings.address_ar : settings.address_en) : ''}
@@ -314,7 +315,7 @@ export default async function HomePage() {
               </div>
 
               <div>
-                <p className="eyebrow text-bone/50">{tr('hours')}</p>
+                <p className="eyebrow text-bone/75">{tr('hours')}</p>
                 <ul className="mt-6">
                   {hours.map((h) => {
                     const isToday = h.day_of_week === new Date().getDay();
@@ -322,7 +323,7 @@ export default async function HomePage() {
                       <li
                         key={h.day_of_week}
                         className={`flex items-center justify-between border-b border-bone/12 py-3.5 text-sm ${
-                          isToday ? 'text-bone' : 'text-bone/55'
+                          isToday ? 'text-bone' : 'text-bone/75'
                         }`}
                       >
                         <span>{dayName(h.day_of_week, locale)}</span>
@@ -333,7 +334,7 @@ export default async function HomePage() {
                     );
                   })}
                 </ul>
-                <p className="mt-5 text-xs text-bone/40">{tr('hoursNote')}</p>
+                <p className="mt-5 text-xs text-bone/70">{tr('hoursNote')}</p>
               </div>
             </div>
           </div>

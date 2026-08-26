@@ -7,18 +7,23 @@ import { isRTL } from '@/lib/i18n';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
+// .display only ever uses 300; carrying 400 and 500 cost bytes nothing rendered.
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
-  weight: ['300', '400', '500'],
+  weight: ['300'],
   variable: '--font-cormorant',
   display: 'swap',
 });
 
+// preload: false matters. Preloaded, this shipped ~163 KB to every visitor including
+// English ones, and was the single largest asset on the page. Unpreloaded it is fetched
+// only when the CSS actually references it — i.e. only in Arabic.
 const notoArabic = Noto_Sans_Arabic({
   subsets: ['arabic'],
-  weight: ['400', '500', '600'],
+  weight: ['400', '600'],
   variable: '--font-noto-arabic',
   display: 'swap',
+  preload: false,
 });
 
 export const metadata: Metadata = {

@@ -128,7 +128,7 @@ export function MenuBrowser({ categories, items, locale }: Props) {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline justify-between gap-3">
                         <h3 className="text-[0.98rem] font-medium leading-snug">{name}</h3>
-                        <span className="tabular shrink-0 text-sm text-brass" dir="ltr">
+                        <span className="tabular shrink-0 text-sm text-brass-ink" dir="ltr">
                           {money(item.price)}
                         </span>
                       </div>
@@ -138,7 +138,7 @@ export function MenuBrowser({ categories, items, locale }: Props) {
                         </p>
                       )}
                       {item.is_signature && (
-                        <span className="eyebrow mt-2 inline-block text-brass">{tr('signatureTag')}</span>
+                        <span className="eyebrow mt-2 inline-block text-brass-ink">{tr('signatureTag')}</span>
                       )}
                     </div>
                   </li>
