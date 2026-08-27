@@ -27,6 +27,23 @@ const check = (label, ok, detail) => {
   ok ? pass++ : fail++;
 };
 
+/* ------------------------------------------- before any browser is involved at all */
+// Chromium exempts loopback from `upgrade-insecure-requests`; WebKit does not. So this
+// suite, and every assertion below it, stayed green through a bug that rendered the
+// whole site unstyled in Safari. Nothing a Chromium page reports can catch that, so the
+// header is checked here off the wire, before launch. The full contract lives in
+// tests/headers.test.mjs; this is the one line that must not be reachable past.
+// Only meaningful against a plain-HTTP origin: over HTTPS the directive is correct and
+// expected, so pointing BASE at the deployed site must not fail here.
+if (BASE.startsWith('http://')) {
+  const headCsp = (await fetch(BASE, { redirect: 'manual' })).headers.get('content-security-policy') ?? '';
+  check(
+    'no upgrade-insecure-requests on this plain-HTTP origin',
+    !headCsp.includes('upgrade-insecure-requests'),
+    headCsp.includes('upgrade-insecure-requests') ? 'Safari would render this build unstyled' : undefined,
+  );
+}
+
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
 

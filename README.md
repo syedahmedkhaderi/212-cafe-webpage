@@ -153,7 +153,7 @@ public. Everything it can do is bounded by RLS and three guarded database functi
 - Audit logging and the order rate limit are enforced by the database, not the app.
 
 ```bash
-./start.sh test                            # security, roles, audit + rate limit
+./start.sh test                            # security, roles, audit + rate limit, response headers
 
 # browser suites — need the app running
 node tests/arabic-site.test.mjs             # language switching across every surface
@@ -166,9 +166,19 @@ node tests/menu-ordering.test.mjs           # ordering from /menu, and the mobil
 ./start.sh reset                            # tidy the board afterwards
 ```
 
-All passing. Three of these exist because the failure they catch is invisible:
+All passing. Four of these exist because the failure they catch is invisible:
 a cached menu that never invalidates, a blocked WebSocket that silently stops the
-dashboard updating, and an admin write that lands with a null audit actor.
+dashboard updating, an admin write that lands with a null audit actor, and a response
+header that renders the whole site unstyled in one browser while looking perfect in
+another.
+
+That last one is why `tests/headers.test.mjs` drives no browser at all. The site once
+sent `upgrade-insecure-requests` on `http://localhost`; Safari honoured it, reissued
+every asset as `https://localhost`, found no TLS listener, and drew bare HTML with
+broken images. Chrome exempts loopback, so the Playwright suites stayed green
+throughout. When the browser that would catch a bug is the one you cannot automate,
+assert the header off the wire instead — it runs in `./start.sh test`, needs no
+credentials, and is true regardless of who is rendering.
 
 Design and architecture rationale, including what was measured rather than assumed,
 is in [`docs/DECISIONS.md`](docs/DECISIONS.md).

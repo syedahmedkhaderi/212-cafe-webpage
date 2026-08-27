@@ -26,10 +26,69 @@ import { NextResponse, type NextRequest } from 'next/server';
  *
  * next/font self-hosts (the fonts are served from /_next/static/media/), so no Google
  * Fonts origin is needed — dropping it tightens the policy rather than loosening it.
+ *
+ * The fourth thing a naive CSP breaks is `upgrade-insecure-requests`, which is a
+ * property of the ORIGIN rather than of the app — see isInsecureLocalOrigin below.
  */
+
+/**
+ * Is this request being served over plain HTTP from a machine on the local network?
+ *
+ * This is the one condition under which `upgrade-insecure-requests` is wrong, and it is
+ * NOT the same question as "is this a development build". `./start.sh` with no argument
+ * does a production build and serves it on http://localhost:3000, so a NODE_ENV check
+ * says "production", sends the directive, and Safari then rewrites every /_next/ asset
+ * to https://localhost:3000 — where nothing is listening — and renders the page as bare
+ * unstyled HTML with broken images. Chrome exempts loopback from the upgrade, so the
+ * same build looks perfect there. That divergence is what makes this bug survive review.
+ *
+ * The LAN ranges matter as much as loopback: this is a phone-first site, and the way you
+ * check it on a phone is http://192.168.x.x:3000 or http://my-mac.local:3000 from iOS
+ * Safari — the exact same failure, on the exact device the site is designed for.
+ *
+ * Deliberately fail-safe in the other direction: anything we cannot positively identify
+ * as an insecure local origin keeps the directive. A hostname we do not recognise is
+ * assumed to be a real deployment, so the worst case is a redundant upgrade on a site
+ * already served over TLS, never a silently dropped directive in production.
+ */
+function isInsecureLocalOrigin(request: NextRequest): boolean {
+  // A load balancer that terminates TLS reports the original scheme here. It is a
+  // comma-separated list when the request crossed more than one hop; the client's own
+  // scheme is the first entry.
+  const forwardedProto = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim().toLowerCase();
+
+  if (forwardedProto) {
+    if (forwardedProto === 'https') return false;
+  } else if (request.nextUrl.protocol === 'https:') {
+    // No proxy in front, so the connection Next itself accepted is the whole story —
+    // `next dev --experimental-https` lands here and correctly keeps the upgrade.
+    return false;
+  }
+
+  // Strip the port, and the brackets an IPv6 literal carries in a Host header.
+  const host = (request.headers.get('host') ?? '')
+    .toLowerCase()
+    .replace(/:\d+$/, '')
+    .replace(/^\[|\]$/g, '');
+
+  return (
+    host === 'localhost' ||
+    host.endsWith('.localhost') ||
+    host === '::1' ||
+    // mDNS. How a phone on the same Wi-Fi reaches this laptop.
+    host.endsWith('.local') ||
+    /^127\./.test(host) ||
+    // RFC 1918: the address a router hands this machine on a home or café network.
+    /^10\./.test(host) ||
+    /^192\.168\./.test(host) ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(host)
+  );
+}
+
 export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   const isDev = process.env.NODE_ENV === 'development';
+  const insecureLocal = isInsecureLocalOrigin(request);
 
   // The Supabase project origin, so the policy does not have to trust every *.supabase.co.
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
@@ -53,13 +112,11 @@ export function proxy(request: NextRequest) {
     // Server Actions post back to this origin; without this they are blocked.
     `form-action 'self'`,
     `frame-ancestors 'none'`,
-    // Production only. Over HTTP, this tells the browser to reissue every subresource
-    // request as HTTPS — which is exactly right on the deployed site and exactly wrong
-    // for `next dev`, where there is no TLS listener. Chrome exempts http://localhost
-    // from the upgrade; WebKit (Safari) does not, so with this on in dev Safari upgrades
-    // every /_next/ asset to https://localhost, hits a TLS error, and renders the page
-    // with no CSS, no JS, and broken images.
-    ...(isDev ? [] : [`upgrade-insecure-requests`]),
+    // Reissue every subresource request over HTTPS. Right on the deployed site; wrong
+    // on any origin that has no TLS listener to be upgraded to. Gated on the request,
+    // not on NODE_ENV — see isInsecureLocalOrigin above for why that distinction is the
+    // whole bug.
+    ...(insecureLocal ? [] : [`upgrade-insecure-requests`]),
   ].join('; ');
 
   const requestHeaders = new Headers(request.headers);

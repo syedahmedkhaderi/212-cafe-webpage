@@ -330,3 +330,44 @@ failed to load, which is worse than either a photograph or an obvious placeholde
 It is `aria-hidden` and carries no alt text: it says nothing the item name beside it does
 not already say, and announcing "placeholder" twelve times would cost the menu page its
 Accessibility 100 for no gain.
+
+## 16. `upgrade-insecure-requests` is gated on the origin, not on `NODE_ENV`
+
+**Decision.** `src/proxy.ts` emits `upgrade-insecure-requests` unless it can positively
+identify the request as arriving over plain HTTP on a local origin — loopback, an RFC
+1918 LAN address, or an `.local` mDNS name. Everything else keeps the directive.
+
+**The bug.** The gate used to be `NODE_ENV === 'development'`. But `./start.sh` with no
+argument does a *production* build and serves it on `http://localhost:3000`, so the
+check said "production", the directive went out, and Safari reissued every `/_next/`
+asset as `https://localhost:3000` — where nothing is listening. The site rendered as
+bare unstyled HTML with broken images. Not degraded: unusable.
+
+**Why it survived.** Chrome exempts loopback from the upgrade; WebKit does not. Every
+Playwright suite here drives Chromium, so all of them stayed green against the exact
+build that was broken in Safari. The old comment in `proxy.ts` even described this
+failure correctly — it just guarded against the wrong condition, because "development"
+and "no TLS listener on this origin" are not the same question. Serving a production
+build locally is precisely where they diverge.
+
+**Why the LAN ranges are in there too.** This is a phone-first site. The way anyone
+checks it on a phone is `http://192.168.x.x:3000` from iOS Safari, which is the same
+failure on the device the site is designed for.
+
+**Fail-safe direction.** The condition is "drop it only when this is provably an
+insecure local origin", never "add it only when this is provably HTTPS". An unfamiliar
+hostname is assumed to be a real deployment. The worst case is then a redundant upgrade
+on a site already served over TLS, rather than a security directive that quietly
+vanishes from production because a reverse proxy did not set `x-forwarded-proto`.
+
+**How it is caught now.** `tests/headers.test.mjs` reads the headers off the wire with
+no browser involved, and asserts both halves: absent on plain-HTTP localhost, present
+when `x-forwarded-proto: https`. The second assertion matters as much as the first —
+it stops the "fix" from being to delete the directive. It runs in `./start.sh test`
+because it needs no browser and no credentials.
+
+Related: the HSTS comment in `next.config.ts` used to claim the header was "only ever
+sent over HTTPS". It is not — `headers()` is static and cannot see the scheme, so it
+goes out on HTTP too. That one is genuinely harmless (RFC 6797 §8.1 requires browsers
+to ignore it over insecure transport), but it was the same mental model that produced
+this bug, so the comment now says what is actually true.

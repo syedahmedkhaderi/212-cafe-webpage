@@ -23,12 +23,18 @@ PORT="${PORT:-3000}"
 MODE="${1:-prod}"
 
 # A stale server on this port silently serves an old build — the kind of thing that
-# wastes twenty minutes. Clear it first.
-if lsof -ti:"$PORT" >/dev/null 2>&1; then
-  printf "  %sPort %s is busy — stopping the existing process.%s\n" "$dim" "$PORT" "$off"
-  lsof -ti:"$PORT" | xargs kill -9 2>/dev/null || true
-  sleep 1
-fi
+# wastes twenty minutes. Clear it before starting a new one.
+#
+# Only for the modes that then bind the port. This used to run unconditionally, above
+# the case, which meant `./start.sh test` killed the running app and then ran suites
+# against it — the browser suites and tests/headers.test.mjs all need it up.
+free_port() {
+  if lsof -ti:"$PORT" >/dev/null 2>&1; then
+    printf "  %sPort %s is busy — stopping the existing process.%s\n" "$dim" "$PORT" "$off"
+    lsof -ti:"$PORT" | xargs kill -9 2>/dev/null || true
+    sleep 1
+  fi
+}
 
 banner() {
   printf "\n%s  212 Café%s  %s\n" "$bold" "$off" "$1"
@@ -45,6 +51,7 @@ banner() {
 
 case "$MODE" in
   dev)
+    free_port
     banner "development"
     exec npx next dev --port "$PORT"
     ;;
@@ -52,9 +59,18 @@ case "$MODE" in
   test)
     printf "\n%s  Verification suites%s\n\n" "$bold" "$off"
     FAILED=0
-    for suite in tests/security.test.mjs tests/staff-rls.test.mjs tests/audit-ratelimit.test.mjs; do
+    # headers.test.mjs needs the app running but no browser and no credentials, so it
+    # belongs here rather than in the browser list below. It exits 2 to mean "skipped,
+    # no server" — that is not a failure, but it is announced loudly, because a
+    # regression suite that quietly never runs is worse than no suite at all.
+    for suite in tests/security.test.mjs tests/staff-rls.test.mjs tests/audit-ratelimit.test.mjs tests/headers.test.mjs; do
       printf "  %s%s%s\n" "$bold" "$suite" "$off"
-      node "$suite" || FAILED=1
+      rc=0; node "$suite" || rc=$?
+      if [ "$rc" -eq 2 ]; then
+        printf "  %s↑ skipped — see the message above.%s\n" "$dim" "$off"
+      elif [ "$rc" -ne 0 ]; then
+        FAILED=1
+      fi
     done
     printf "\n  %sBrowser suites need the app running — start it, then:%s\n" "$dim" "$off"
     printf "    node tests/live-demo.test.mjs\n"
@@ -72,6 +88,7 @@ case "$MODE" in
     ;;
 
   prod|*)
+    free_port
     printf "\n  Building…\n"
     npm run build >/tmp/212-build.log 2>&1 || {
       tail -25 /tmp/212-build.log

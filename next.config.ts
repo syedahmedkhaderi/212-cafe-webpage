@@ -51,7 +51,14 @@ const nextConfig: NextConfig = {
          */
         source: '/:path*',
         headers: [
-          // Two years, preloadable. Only ever sent over HTTPS, so localhost is unaffected.
+          // Two years, preloadable.
+          //
+          // This IS sent on plain-HTTP responses too — `headers()` is static and cannot
+          // see the request scheme. That is harmless because RFC 6797 §8.1 requires a
+          // browser to ignore an STS header received over insecure transport, so local
+          // HTTP development is unaffected. Do not read that as "the header is only ever
+          // sent over HTTPS": believing that about `upgrade-insecure-requests`, which has
+          // no such rule, is exactly how the Safari blank-page bug got shipped.
           {
             key: 'Strict-Transport-Security',
             value: 'max-age=63072000; includeSubDomains; preload',
