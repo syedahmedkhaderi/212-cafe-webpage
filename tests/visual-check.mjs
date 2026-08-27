@@ -6,6 +6,9 @@
 // Not an assertion suite — it exists so the three sections that prompted the redesign
 // can be looked at directly, which is the only way to tell whether a layout is fixed.
 import fs from 'fs';
+// ⚠ Absolute path into an npx cache, matching the other suites in this directory. It
+// works on this machine and nowhere else, and breaks if the npx cache is evicted. The
+// fix when this project gets a CI story is `npm i -D playwright` and a bare import.
 import { chromium } from '/Users/syed/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/index.mjs';
 
 const BASE = process.env.BASE ?? 'http://localhost:3000';

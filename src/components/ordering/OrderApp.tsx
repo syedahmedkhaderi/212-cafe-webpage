@@ -17,6 +17,7 @@ import {
 } from '@/lib/order/cart';
 import { getBrowserClient } from '@/lib/supabase/client';
 import { persistLocale } from '@/lib/locale-client';
+import { hasUsablePhoto } from '@/lib/site';
 
 type Props = {
   tableToken: string;
@@ -212,10 +213,10 @@ export function OrderApp({ tableToken, tableLabel, categories, items, initialLoc
                       onClick={() => setSheetItem(item)}
                       className="flex w-full items-center gap-4 py-4 text-start transition-colors hover:bg-white/4"
                     >
-                      {item.image_path && (
+                      {hasUsablePhoto(item) && (
                         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-sm bg-white/5">
                           <Image
-                            src={item.image_path}
+                            src={item.image_path!}
                             alt=""
                             fill
                             sizes="64px"
@@ -335,19 +336,26 @@ function ItemSheet({
         className="absolute inset-0 bg-black/65"
       />
       <div className="relative max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-[var(--card)] pb-5">
-        {item.image_path && (
+        {/*
+          The close button lives OUTSIDE the image block on purpose. It used to be
+          nested inside it, which was fine only while every item had a photograph — the
+          moment one does not (a duplicate, or AI stock), the sheet lost its only visible
+          way out and left the backdrop tap as the sole escape.
+        */}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={t('Close', 'إغلاق')}
+          className="absolute end-3 top-3 z-10 grid h-9 w-9 place-items-center rounded-full bg-black/55 text-bone backdrop-blur"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        </button>
+
+        {hasUsablePhoto(item) && (
           <div className="relative aspect-[16/10] w-full overflow-hidden">
-            <Image src={item.image_path} alt="" fill sizes="512px" className="object-cover" priority />
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label={t('Close', 'إغلاق')}
-              className="absolute end-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-black/55 text-bone backdrop-blur"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-              </svg>
-            </button>
+            <Image src={item.image_path!} alt="" fill sizes="512px" className="object-cover" priority />
           </div>
         )}
 

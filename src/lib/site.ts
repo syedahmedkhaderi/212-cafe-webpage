@@ -128,6 +128,27 @@ export const SHARED_PHOTO_ITEMS = new Set<string>([
   'Cheesy Roasted Beef Sandwich',
 ]);
 
+/**
+ * Whether an item's photograph is fit to show.
+ *
+ * Two independent disqualifications, and every photo-led surface must apply BOTH — the
+ * menu page and the guest ordering app included, not just the homepage. That is where
+ * the owner actually scrolls, so a watermarked frame surviving there defeats the point
+ * of removing it from the shopfront.
+ *
+ *   - a duplicate, so one latte shot does not stand in for five different drinks
+ *   - AI-generated stock, which is not a picture of their food at all
+ *
+ * Falling back to a text-forward card is deliberate: no photograph reads as considered,
+ * while the wrong photograph reads as careless.
+ */
+export function hasUsablePhoto(item: { name_en: string; image_path: string | null }): boolean {
+  if (!item.image_path) return false;
+  if (SHARED_PHOTO_ITEMS.has(item.name_en)) return false;
+  if (AI_GENERATED_IMAGES.has(item.image_path)) return false;
+  return true;
+}
+
 export const MAPS_URL =
   'https://www.google.com/maps/search/?api=1&query=212+Cafe+Marina+Twin+Tower+A+Lusail+Qatar';
 

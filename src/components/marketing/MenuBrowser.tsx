@@ -6,7 +6,7 @@ import type { MenuCategory, MenuItem, Locale } from '@/lib/types';
 import { localised } from '@/lib/types';
 import { money } from '@/lib/format';
 import { isRTL, translator } from '@/lib/i18n';
-import { SHARED_PHOTO_ITEMS } from '@/lib/site';
+import { hasUsablePhoto } from '@/lib/site';
 
 type Props = {
   categories: MenuCategory[];
@@ -105,10 +105,10 @@ export function MenuBrowser({ categories, items, locale }: Props) {
               {list.map((item) => {
                 const name = localised(item, 'name', locale);
                 const description = localised(item, 'description', locale);
-                /* Twelve of the crawled photos are shared across several drinks — one
-                   latte shot covers five products. Those render text-forward so the
-                   same picture never repeats down a column. */
-                const showPhoto = item.image_path && !SHARED_PHOTO_ITEMS.has(item.name_en);
+                /* Text-forward where the photograph is a duplicate (one latte shot
+                   covers five products) or AI-generated stock rather than their food.
+                   See hasUsablePhoto — both rules, on every photo-led surface. */
+                const showPhoto = hasUsablePhoto(item);
 
                 return (
                   <li key={item.id} className="flex gap-4">
