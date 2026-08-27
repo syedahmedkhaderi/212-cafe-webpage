@@ -3,12 +3,14 @@ import Image, { getImageProps } from 'next/image';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getBusiness, getMenu } from '@/lib/menu/queries';
-import { clock, dayName, isOpenNow, money } from '@/lib/format';
+import { clock, dayName, isOpenNow, money, stripDash } from '@/lib/format';
 import { HERO, INSTAGRAM_URL, MAPS_URL, VIEW_HERO, VIEW_IMAGES } from '@/lib/site';
 import { SiteFooter, SiteHeader } from '@/components/marketing/SiteChrome';
+import { MobileActionBar } from '@/components/marketing/MobileActionBar';
 import { LanguagePicker } from '@/components/marketing/LanguageSwitch';
 import { SITE_URL } from '@/lib/site-url';
 import { getLocale, hasChosenLocale } from '@/lib/locale-server';
+import { currentTable } from '@/lib/order/table-cookie';
 import { isRTL } from '@/lib/i18n';
 import { localised } from '@/lib/types';
 import { contentReader, getContentRows, getTheme } from '@/lib/content/queries';
@@ -23,16 +25,27 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [{ categories, items }, { settings, hours }, locale, chosen, headerList, contentRows, theme] =
-    await Promise.all([
-      getMenu(),
-      getBusiness(),
-      getLocale(),
-      hasChosenLocale(),
-      headers(),
-      getContentRows(),
-      getTheme(),
-    ]);
+  const [
+    { categories, items },
+    { settings, hours },
+    locale,
+    chosen,
+    headerList,
+    contentRows,
+    theme,
+    table,
+  ] = await Promise.all([
+    getMenu(),
+    getBusiness(),
+    getLocale(),
+    hasChosenLocale(),
+    headers(),
+    getContentRows(),
+    getTheme(),
+    // Null unless this visitor arrived through /t/<token>. Costs nothing when there is
+    // no table cookie, which is every visitor who did not scan a code.
+    currentTable(),
+  ]);
 
   // The CSP allows inline scripts only with the per-request nonce from src/proxy.ts.
   // Without this the JSON-LD block is blocked and the café loses its rich result.
@@ -123,9 +136,11 @@ export default async function HomePage() {
 
       <main>
         {/* ---------------------------------------------------------------- hero */}
-        {/* 88svh rather than 100svh: less height to fill means less side crop, and a
-            hero that stops just short of the fold tells the reader the page continues. */}
-        <section className="relative min-h-[88svh] w-full overflow-hidden bg-ink">
+        {/* The sticky header sits in normal flow above the hero, not over it — so
+            "Marina Twin Tower…" can no longer slide under the nav. Subtract roughly the
+            header height (~63px phone, ~69px desktop) so the whole first scene still
+            fits the initial viewport; it is min-h, so a taller header only grows it. */}
+        <section className="relative min-h-[calc(100svh-var(--site-header-h,69px))] w-full overflow-hidden bg-ink">
           {/*
             Preload the hero explicitly.
 
@@ -173,8 +188,8 @@ export default async function HomePage() {
             className="absolute inset-x-0 bottom-0 h-[85%] bg-gradient-to-t from-ink via-ink/88 to-transparent"
           />
 
-          <div className="relative z-10 mx-auto flex min-h-[88svh] max-w-6xl flex-col justify-end px-5 pb-16 sm:px-8 sm:pb-24">
-            <p className="eyebrow reveal on-photo text-bone/90">{tr('heroLocation')}</p>
+          <div className="relative z-10 mx-auto flex min-h-[calc(100svh-var(--site-header-h,69px))] max-w-6xl flex-col justify-end px-5 pb-16 sm:px-8 sm:pb-24">
+            <p className="eyebrow reveal on-photo leading-relaxed text-bone/90">{tr('heroLocation')}</p>
 
             <h1 className="display reveal mt-5 text-bone" style={{ animationDelay: '80ms' }}>
               <span className="block text-[clamp(3.5rem,13vw,9rem)]">{tr('heroLine1')}</span>
@@ -188,18 +203,39 @@ export default async function HomePage() {
               {tr('heroSub')}
             </p>
 
+            {/*
+              The one line that makes the scan → hero → menu path legible. Without it a
+              guest who scanned the code at their table sees a marketing homepage and
+              has no reason to believe ordering is anywhere on it.
+            */}
+            {table && settings?.accepting_orders && (
+              <p
+                className="reveal on-photo mt-7 inline-flex w-fit items-center gap-2.5 rounded-full border border-brass-lit/45 bg-ink/35 px-4 py-2 text-[0.82rem] text-bone backdrop-blur-sm"
+                style={{ animationDelay: '200ms' }}
+              >
+                <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-brass-lit" />
+                {rtl
+                  ? `أنت على الطاولة ${table.label} — اطلب من القائمة`
+                  : `You're at Table ${table.label}, order straight from the menu`}
+              </p>
+            )}
+
             <div className="reveal mt-9 flex flex-wrap items-center gap-3" style={{ animationDelay: '240ms' }}>
               <Link
                 href="/menu"
-                className="rounded-full bg-bone px-7 py-3.5 text-[0.78rem] uppercase tracking-[0.14em] text-ink transition-colors hover:bg-brass-lit"
+                className="min-h-12 rounded-full bg-bone px-7 py-3.5 text-[0.78rem] uppercase tracking-[0.14em] text-ink transition-colors hover:bg-brass-lit"
               >
-                {tr('exploreMenu')}
+                {table && settings?.accepting_orders
+                  ? rtl
+                    ? 'اطلب الآن'
+                    : 'Order now'
+                  : tr('exploreMenu')}
               </Link>
               <a
                 href={MAPS_URL}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="rounded-full border border-bone/40 px-7 py-3.5 text-[0.78rem] uppercase tracking-[0.14em] text-bone transition-colors hover:border-bone hover:bg-bone/10"
+                className="min-h-12 rounded-full border border-bone/40 px-7 py-3.5 text-[0.78rem] uppercase tracking-[0.14em] text-bone transition-colors hover:border-bone hover:bg-bone/10"
               >
                 {tr('findUs')}
               </a>
@@ -249,7 +285,9 @@ export default async function HomePage() {
 
               <div>
                 <p className="eyebrow">{tr('viewEyebrow')}</p>
-                <h2 className="display mt-5 text-[clamp(2.25rem,5vw,3.75rem)]">{tr('viewTitle')}</h2>
+                <h2 className="display mt-5 text-[clamp(2.25rem,5vw,3.75rem)]">
+                  {stripDash(tr('viewTitle'))}
+                </h2>
                 <p className="mt-6 leading-relaxed text-[var(--muted)]">{tr('viewBody1')}</p>
                 <p className="mt-4 leading-relaxed text-[var(--muted)]">{tr('viewBody2')}</p>
               </div>
@@ -285,12 +323,38 @@ export default async function HomePage() {
                 {tr('signaturesTitle')}
               </h2>
 
-              <div className="mt-14 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+              {/*
+                Two layouts, one switch at `lg`. Below it the five signatures are a
+                snap slider — a phone shows one card and the edge of the next, a tablet
+                shows two — because five 3:4 photos stacked or wrapped 2+2+1 is a column
+                of dead space with an orphan on the end. At `lg` they line up as five
+                equal columns, which is the whole point of the section.
+
+                `scroll-px-5` matches the `px-5` inset: without it `snap-start` aligns the
+                first card to the padding-box edge and eats the leading gutter, so card
+                one sat flush to the screen edge with its title clipped.
+              */}
+              {/*
+                tabIndex/role/aria-label, because below `lg` this is a scroller whose
+                cards contain no links or buttons at all — so a keyboard user had no way
+                to reach the four signatures past the first. axe flags it
+                (scrollable-region-focusable); it is the one thing on the shopfront that
+                a pointer could do and a keyboard could not.
+              */}
+              <div
+                tabIndex={0}
+                role="region"
+                aria-label={tr('signaturesTitle')}
+                className="rail -mx-5 mt-14 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-5 px-5 pb-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass-lit lg:mx-0 lg:grid lg:grid-cols-5 lg:gap-5 lg:scroll-px-0 lg:overflow-visible lg:px-0 lg:pb-0"
+              >
                 {signatures.map((item) => {
                   const name = localised(item, 'name', locale);
                   const description = localised(item, 'description', locale);
                   return (
-                    <article key={item.id} className="group">
+                    <article
+                      key={item.id}
+                      className="group w-[82vw] shrink-0 snap-start sm:w-[46vw] lg:w-auto"
+                    >
                       {/*
                         3:4, uniform — and deliberately NOT each image's natural ratio.
 
@@ -313,13 +377,13 @@ export default async function HomePage() {
                             src={item.image_path}
                             alt={name}
                             fill
-                            sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 360px"
+                            sizes="(max-width: 640px) 82vw, (max-width: 1024px) 45vw, 220px"
                             className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                           />
                         )}
                       </div>
                       <div className="mt-5 flex items-baseline justify-between gap-4">
-                        <h3 className="display text-2xl">{name}</h3>
+                        <h3 className="display text-2xl lg:text-xl">{name}</h3>
                         <span className="tabular shrink-0 text-sm text-brass-lit" dir="ltr">
                           {money(item.price)}
                         </span>
@@ -484,6 +548,10 @@ export default async function HomePage() {
           instagram={settings.instagram}
         />
       )}
+
+      {/* Clears the fixed bar so the last of the footer is never underneath it. */}
+      <div aria-hidden className="h-20 sm:hidden" />
+      <MobileActionBar locale={locale} phone={settings?.phone} />
     </div>
   );
 }

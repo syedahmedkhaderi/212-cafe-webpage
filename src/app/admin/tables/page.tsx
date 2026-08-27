@@ -6,7 +6,7 @@ import QRCode from 'qrcode';
 import { AdminShell, SignOutButton } from '@/components/admin/AdminShell';
 import { currentAccessToken, getBrowserClient } from '@/lib/supabase/client';
 import { rotateTableToken } from '../actions';
-import { SITE_URL, isLocalOrigin, orderUrl } from '@/lib/site-url';
+import { SITE_URL, isLocalOrigin, tableEntryUrl } from '@/lib/site-url';
 
 type TableRow = {
   id: string;
@@ -47,7 +47,10 @@ function Tables() {
         const token = tokenByTable.get(t.id) ?? null;
         let qr: string | null = null;
         if (token) {
-          qr = await QRCode.toDataURL(orderUrl(token), {
+          // /t/<token>, not /order/<token>: the code drops the guest at the shopfront
+          // with the table remembered, so they read the hero and order from the menu.
+          // Codes printed before this change still work — /order/<token> is kept.
+          qr = await QRCode.toDataURL(tableEntryUrl(token), {
             width: 512,
             margin: 1,
             color: { dark: '#14110f', light: '#ffffff' },
@@ -167,7 +170,7 @@ function Tables() {
 
               <div className="mt-4 print:hidden">
                 <p className="tabular truncate text-[0.62rem] text-[var(--muted)]/70">
-                  {t.token ? `${SITE_URL}/order/${t.token.slice(0, 10)}…` : '—'}
+                  {t.token ? `${SITE_URL}/t/${t.token.slice(0, 10)}…` : '—'}
                 </p>
                 <button
                   type="button"

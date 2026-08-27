@@ -211,6 +211,11 @@ function OrderCard({
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <div className="flex items-baseline gap-3">
           <span className="display text-2xl">Table {order.table_label}</span>
+          {/* Optional, and only when the guest typed one. The table is the identity —
+              this is so the counter can call the order out by name. */}
+          {order.customer_name && (
+            <span className="text-[0.82rem] text-[var(--fg)]">{order.customer_name}</span>
+          )}
           <span className="tabular text-[0.72rem] text-[var(--muted)]">{order.order_number}</span>
         </div>
         <span className="tabular text-brass-lit">{money(order.total)}</span>

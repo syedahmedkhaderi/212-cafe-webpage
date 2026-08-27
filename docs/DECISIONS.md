@@ -258,3 +258,75 @@ the failure perfectly. `tests/cms.test.mjs` therefore asserts the policy directl
 The same reasoning applies to `scripts/export-content.mjs`, which must sign in as staff:
 RLS hides unavailable items from anon, so an anonymous export silently omitted five
 switched-off items and still printed a cheerful success.
+
+## 14. The table travels in a validated httpOnly cookie, not a typed table number
+
+**Decision.** The QR encodes `/t/<token>`. That route resolves the token server-side,
+writes it to an httpOnly `212_table` cookie, and redirects to the shopfront. `/` and
+`/menu` read the cookie, re-resolve it, and pass the token to their client component —
+the same shape as `/order/[tableToken]`, which takes it from the route.
+
+**Why not ask the guest which table they are at.** It is the obvious cheap answer and it
+undoes the system. `place_order` validates a table token and the order rate limit is
+keyed on it; a typed table number would need a fourth anon-callable function to map
+"7" → a table, which breaks the three-function anon surface in decision 5 — and it
+reintroduces exactly the guessable `?table_id=12` the opaque token replaced. Anyone
+could then order against a stranger's table from anywhere, which is worse than the
+incumbent, not better.
+
+**Why a cookie rather than `?t=` on every link.** The guest walks hero → menu → back;
+a query parameter has to survive every navigation and ends up in shared links, browser
+history and analytics. A cookie carries itself, and httpOnly means the token is not
+readable by script even though the browser still needs it — it arrives as a prop from
+the server render instead, which is where `/order/[tableToken]` already gets it.
+
+**Consequences worth knowing.**
+
+- The cookie is written *only* after `resolve_table_token` succeeds, and re-resolved on
+  every render, so a rotated or revoked token stops working on the next page load rather
+  than when the cookie expires.
+- A stale cookie cannot be cleared from a page: `currentTable()` runs in a Server
+  Component, which cannot mutate cookies. It costs one lookup per render until the 4-hour
+  `maxAge` runs out, or until the guest rescans and `/t` deletes it. Accepted.
+- The `/t` response carries `Cache-Control: no-store`. A 307 with `Set-Cookie` is exactly
+  what an intermediary will cache, and the second phone to scan that code would then get
+  the redirect with no cookie and a read-only menu, with nothing on screen saying why.
+- `/menu` with no cookie is byte-for-byte the page it was. That is what keeps it public
+  and indexable, and `tests/menu-ordering.test.mjs` asserts it directly.
+
+⚠️ **`accepting_orders` is now load-bearing, and nothing invalidates it.** Ordering hides
+itself when `business_settings.accepting_orders` is false, so a guest cannot fill a cart
+that `place_order` will refuse. But that flag has **no admin control** — it is a database
+column only — and no Server Action touches it, so decision 11's caveat applies in full:
+a direct write does not invalidate the `business` tag, and `getBusiness()` caches for an
+hour. Flipping it in SQL therefore takes up to **60 minutes** to reach the public site.
+
+Verified rather than assumed: with the flag off and the cache cleared, `/menu` shows the
+paused pill and no Add buttons and `/` drops the table banner; with it merely flipped in
+SQL against a warm cache, the site kept taking orders. The fix, if the café ever needs to
+pause service from the dashboard, is a `setAcceptingOrders` action in
+`src/app/admin/actions.ts` that calls `updateTag(TAGS.business)` — the same shape as
+`setItemAvailability`. Not built, because nothing in the app can switch the flag today.
+
+## 15. Twelve items get a drawn placeholder, not a sourced photograph
+
+**Decision.** The 12 items `hasUsablePhoto()` rejects render `ItemPlaceholder` — inline
+SVG, a brass line-art glyph chosen by category — instead of the hairline rule they used
+to get.
+
+**Why not just find pictures.** Because there are none to find. Every item already has an
+`image_path`; these 12 are disqualified on provenance, not availability — nine are
+duplicates (one latte shot covering five drinks), three are AI-generated stock. The only
+legitimate source of photographs of *this* café's food is the café. Filling the gaps from
+a stock library would recreate the exact defect this project was built to point out: one
+of the supplied images shipped with a visible Gemini watermark on it. A grid with no
+holes in it is not worth being wrong about whose food is on the page.
+
+**Why a placeholder rather than the old hairline.** The rule was fine in a two-column
+desktop grid. On a phone the menu is one column, and eight of the twelve fall in Hot
+Beverage — a run of thin brass bars down a single column reads as a page whose images
+failed to load, which is worse than either a photograph or an obvious placeholder.
+
+It is `aria-hidden` and carries no alt text: it says nothing the item name beside it does
+not already say, and announcing "placeholder" twelve times would cost the menu page its
+Accessibility 100 for no gain.

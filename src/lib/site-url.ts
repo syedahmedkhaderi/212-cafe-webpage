@@ -16,3 +16,14 @@ export const SITE_URL = (
 export const isLocalOrigin = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])/.test(SITE_URL);
 
 export const orderUrl = (token: string) => `${SITE_URL}/order/${token}`;
+
+/**
+ * What a table's QR code actually encodes.
+ *
+ * `/t/<token>` validates the token, drops it in a cookie and redirects to the
+ * shopfront, so a guest who scans arrives at the hero and can order from anywhere on
+ * the site rather than being dropped straight into the ordering app. `/order/<token>`
+ * is kept and still works — it is the direct link, and what staff use to preview a
+ * table.
+ */
+export const tableEntryUrl = (token: string) => `${SITE_URL}/t/${token}`;

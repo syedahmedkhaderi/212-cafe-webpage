@@ -23,7 +23,8 @@ Three exceptions, each flagged rather than blended in:
 | Route | Who | What |
 | --- | --- | --- |
 | `/` | Public | Marketing site; hero is a supplied press photo, The View is the café's own |
-| `/menu` | Public | Full bilingual menu, EN/AR with correct RTL |
+| `/menu` | Public | Full bilingual menu, EN/AR with correct RTL. **Ordering switches on when a table QR has been scanned** |
+| `/t/[tableToken]` | Guest | What the QR encodes: validates the token, remembers the table, sends them to the hero |
 | `/order/[tableToken]` | Guest | Scan-to-order: browse, configure, cart, submit, track |
 | `/admin` | Staff | Live orders, today's revenue, top items, sold-out toggles |
 | `/admin/content` | Manager+ | Hero image, brand colours, fonts, every string EN/AR, category photos, signature picks, draft approvals |
@@ -72,6 +73,23 @@ anonymous export would silently omit them.
 **Set `NEXT_PUBLIC_SITE_URL` to the deployed origin before printing QR codes.**
 Codes generated against localhost cannot be scanned from a phone; `/admin/tables`
 shows a warning banner when that is the case.
+
+⚠️ **QR codes now encode `/t/<token>`, not `/order/<token>` — reprint them.** Scanning
+takes the guest to the shopfront with their table remembered in an httpOnly cookie, so
+they read the hero, walk into the menu, and can order from there. Previously printed
+codes still work; they just drop the guest straight into the ordering app as before.
+
+### Ordering from the menu
+
+A guest who has scanned a table sees the full menu with **Add** on every item, a cart
+bar, and the same sheets the ordering app uses — it is the same cart, the same
+`place_order` call and the same idempotency key, not a second implementation. After
+they order, the menu stays browsable and the tracker becomes a dismissible pill rather
+than taking the screen.
+
+Everyone else sees exactly the read-only menu, so `/menu` stays public and indexable.
+Ordering also hides itself when `accepting_orders` is switched off, rather than letting
+somebody fill a cart the database will refuse.
 
 ### Demo logins
 
@@ -144,6 +162,7 @@ node tests/rtl-availability-fidelity.test.mjs
 node tests/cms.test.mjs                     # admin write path, audit actor, upload validation
 node tests/cache.test.mjs                   # the cache hits, and a save invalidates it
 node tests/csp.test.mjs                     # Realtime and QR codes survive the CSP
+node tests/menu-ordering.test.mjs           # ordering from /menu, and the mobile layout
 ./start.sh reset                            # tidy the board afterwards
 ```
 
@@ -166,6 +185,11 @@ is in [`docs/DECISIONS.md`](docs/DECISIONS.md).
   short of what a full-bleed hero needs at 1440px on a 2× display. Nothing is upscaled
   (that adds bytes, not detail); `node data/optimize-hero.mjs` prints the exact
   shortfall.
+- **Twelve item photographs.** Twelve of the 53 items have no picture fit to show — nine
+  because one photo stands in for several drinks, three because the supplied frame is
+  AI-generated stock. They render a drawn placeholder rather than borrowed imagery, and
+  the gap is concentrated in Hot Beverage (8 of 15). The rest: savoury 2, sweets-pastry 1,
+  brunch 1. Only the café's own photographs should fill these.
 - **Approval of the 19 drafted descriptions** (`copy_source = 'draft'`).
 - A real logo asset — the incumbent's `brandLogoUrl` 404s and is not their branding
 - Confirmed trading hours (Instagram says 12:00–00:00; Google shows ~12:30–23:00)

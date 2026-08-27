@@ -35,8 +35,10 @@ export function LanguageSwitch({
 }) {
   const { switchTo, pending } = useLocaleSwitch(locale);
 
+  // min-h-11 / min-w-11: this is the control a visitor reaches for first, and on a
+  // phone it was a 24px-tall target. The pill looks the same; the hit box does not.
   const base =
-    'px-3 py-1.5 text-[0.78rem] rounded-full transition-colors leading-none';
+    'grid place-items-center min-h-11 min-w-11 px-3 text-[0.78rem] rounded-full transition-colors leading-none';
   const activeClass =
     tone === 'dark' ? 'bg-bone text-ink' : 'bg-ink text-bone';
   const idleClass =

@@ -1,16 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { INSTAGRAM_URL, MAPS_URL } from '@/lib/site';
+import { stripDash } from '@/lib/format';
 import { useCopy } from '@/lib/content/provider';
 import type { Locale } from '@/lib/types';
 import { LanguageSwitch } from './LanguageSwitch';
 
 export function SiteHeader({ locale }: { locale: Locale }) {
   const tr = useCopy(locale);
-  const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const headerRef = useRef<HTMLElement | null>(null);
 
   const NAV = [
     { href: '#view', label: tr('navView') },
@@ -20,35 +21,49 @@ export function SiteHeader({ locale }: { locale: Locale }) {
   ];
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
     };
   }, [open]);
 
+  /*
+    Publish the header's real height as --site-header-h.
+
+    The hero subtracts it to fill the first screen exactly. That subtraction used to be
+    a hardcoded 69px, which is the DESKTOP height — on a phone the header is about six
+    pixels shorter, so the hero ran six pixels long and left a sliver of the next
+    section peeking above the fold on the device most people see this on. Measured, it
+    is right on both, and stays right if a visitor has raised their font size.
+  */
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+
+    const publish = () => {
+      document.documentElement.style.setProperty(
+        '--site-header-h',
+        `${Math.round(el.getBoundingClientRect().height)}px`,
+      );
+    };
+
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <>
       <header
-        className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
-          scrolled
-            ? 'bg-[var(--bg)]/88 backdrop-blur-md border-b border-[var(--line)]'
-            : 'border-b border-transparent'
-        }`}
+        ref={headerRef}
+        className="sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--bg)]/96 backdrop-blur-md"
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
           <Link
             href="/"
             aria-label="212 Café"
-            className={`display text-2xl leading-none tracking-tight transition-colors ${
-              scrolled ? 'text-[var(--fg)]' : 'text-bone'
-            }`}
+            className="display text-2xl leading-none tracking-tight text-[var(--fg)]"
           >
             212
           </Link>
@@ -58,20 +73,14 @@ export function SiteHeader({ locale }: { locale: Locale }) {
               <a
                 key={n.href}
                 href={n.href}
-                className={`text-[0.8rem] tracking-wide transition-colors hover:text-brass ${
-                  scrolled ? 'text-[var(--muted)]' : 'text-bone/80'
-                }`}
+                className="text-[0.8rem] tracking-wide text-[var(--muted)] transition-colors hover:text-brass"
               >
                 {n.label}
               </a>
             ))}
             <Link
               href="/menu"
-              className={`rounded-full border px-5 py-2 text-[0.75rem] tracking-[0.12em] uppercase transition-colors ${
-                scrolled
-                  ? 'border-ink/25 text-[var(--fg)] hover:border-brass hover:text-brass'
-                  : 'border-bone/40 text-bone hover:border-bone hover:bg-bone hover:text-ink'
-              }`}
+              className="rounded-full border border-ink/25 px-5 py-2 text-[0.75rem] tracking-[0.12em] text-[var(--fg)] uppercase transition-colors hover:border-brass hover:text-brass"
             >
               {tr('fullMenu')}
             </Link>
@@ -80,13 +89,13 @@ export function SiteHeader({ locale }: { locale: Locale }) {
           {/* The switcher sits beside the logo on every screen size — a visitor should
               never have to open a menu to find their own language. */}
           <div className="flex items-center gap-3">
-            <LanguageSwitch locale={locale} tone={scrolled ? 'light' : 'dark'} />
+            <LanguageSwitch locale={locale} tone="light" />
 
             <button
               type="button"
               onClick={() => setOpen(true)}
               aria-label={tr('openMenu')}
-              className={`md:hidden ${scrolled ? 'text-[var(--fg)]' : 'text-bone'}`}
+              className="-me-2 grid min-h-11 min-w-11 place-items-center text-[var(--fg)] md:hidden"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M3 7h18M3 12h18M3 17h18" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
@@ -97,10 +106,15 @@ export function SiteHeader({ locale }: { locale: Locale }) {
       </header>
 
       {open && (
-        <div className="fixed inset-0 z-[60] bg-ink text-bone md:hidden">
+        <div className="fixed inset-0 z-[60] overflow-y-auto overscroll-contain bg-ink pb-[max(1.5rem,env(safe-area-inset-bottom))] text-bone md:hidden">
           <div className="flex items-center justify-between px-5 py-4">
             <span className="display text-2xl">212</span>
-            <button type="button" onClick={() => setOpen(false)} aria-label={tr('closeMenu')}>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              aria-label={tr('closeMenu')}
+              className="-me-2 grid min-h-11 min-w-11 place-items-center"
+            >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
               </svg>
@@ -154,7 +168,7 @@ export function SiteFooter({
           <div>
             <p className="display text-5xl leading-none">212</p>
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-[var(--muted)]">
-              {tr('footerBlurb')}
+              {stripDash(tr('footerBlurb'))}
             </p>
             <div className="mt-5">
               <LanguageSwitch locale={locale} />
