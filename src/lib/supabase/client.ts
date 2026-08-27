@@ -26,3 +26,15 @@ export function getBrowserClient(): SupabaseClient {
   });
   return browserClient;
 }
+
+/**
+ * The current access token, for forwarding to a Server Action.
+ *
+ * Read fresh at call time rather than captured from a render: `getSession()` refreshes
+ * an expired token first, so a manager who left the dashboard open over lunch does not
+ * get a silent RLS refusal on their next click.
+ */
+export async function currentAccessToken(): Promise<string | null> {
+  const { data } = await getBrowserClient().auth.getSession();
+  return data.session?.access_token ?? null;
+}

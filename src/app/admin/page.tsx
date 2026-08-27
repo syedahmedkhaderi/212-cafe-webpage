@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { AdminShell, SignOutButton } from '@/components/admin/AdminShell';
 import { useLiveOrders, type LiveOrder } from '@/lib/order/live';
-import { getBrowserClient } from '@/lib/supabase/client';
+import { currentAccessToken, getBrowserClient } from '@/lib/supabase/client';
+import { setItemAvailability } from './actions';
 import { money } from '@/lib/format';
 import type { OrderStatus } from '@/lib/types';
 
@@ -252,6 +253,7 @@ function Availability() {
   const [items, setItems] = useState<{ id: string; name_en: string; is_available: boolean }[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const load = async () => {
     const { data } = await getBrowserClient()
@@ -265,16 +267,25 @@ function Availability() {
     load();
   }, []);
 
+  /**
+   * Goes through a Server Action rather than straight to PostgREST, so the write and
+   * the cache invalidation happen in one place. A direct write here would leave the
+   * public menu serving a sold-out item until its cache expired.
+   */
   const toggle = async (id: string, next: boolean) => {
     setBusy(id);
     setItems((c) => c.map((i) => (i.id === id ? { ...i, is_available: next } : i)));
-    const { error } = await getBrowserClient()
-      .from('menu_items')
-      .update({ is_available: next })
-      .eq('id', id);
-    if (error) {
-      console.error('[212] availability toggle failed', error.message);
-      load();
+
+    const token = await currentAccessToken();
+    const result = token
+      ? await setItemAvailability(token, id, next)
+      : ({ ok: false, error: 'Your session has expired. Please sign in again.' } as const);
+
+    if (!result.ok) {
+      setError(result.error);
+      load(); // resync from the server; the optimistic flip was wrong
+    } else {
+      setError(null);
     }
     setBusy(null);
   };
@@ -292,6 +303,14 @@ function Availability() {
         placeholder="Search to mark sold out…"
         className="mt-3 w-full rounded-lg border border-[var(--line)] bg-transparent px-3.5 py-2.5 text-[0.82rem] placeholder:text-[var(--muted)]/60 focus:border-brass focus:outline-none"
       />
+      {/* A refused write used to fail into console.error only, so the toggle silently
+          snapped back with no explanation. RLS refusals are the expected case for a
+          staff-role account and deserve a sentence. */}
+      {error && (
+        <p role="alert" className="mt-3 text-[0.8rem] text-red-400">
+          {error}
+        </p>
+      )}
       <ul className="mt-3 max-h-72 space-y-1 overflow-y-auto">
         {shown.length === 0 && (
           <li className="py-3 text-[0.8rem] text-[var(--muted)]">

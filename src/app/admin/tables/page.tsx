@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { AdminShell, SignOutButton } from '@/components/admin/AdminShell';
-import { getBrowserClient } from '@/lib/supabase/client';
+import { currentAccessToken, getBrowserClient } from '@/lib/supabase/client';
+import { rotateTableToken } from '../actions';
 import { SITE_URL, isLocalOrigin, orderUrl } from '@/lib/site-url';
 
 type TableRow = {
@@ -27,6 +28,7 @@ export default function TablesPage() {
 function Tables() {
   const [rows, setRows] = useState<TableRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const supabase = getBrowserClient();
@@ -67,13 +69,16 @@ function Tables() {
   /** Rotating a token invalidates any printed code immediately — the reason tokens
    *  are rows rather than a column on the table. */
   const rotate = async (tableId: string) => {
-    const supabase = getBrowserClient();
-    await supabase
-      .from('table_qr_tokens')
-      .update({ is_active: false, revoked_at: new Date().toISOString() })
-      .eq('table_id', tableId)
-      .eq('is_active', true);
-    await supabase.from('table_qr_tokens').insert({ table_id: tableId });
+    const token = await currentAccessToken();
+    if (!token) {
+      setError('Your session has expired. Please sign in again.');
+      return;
+    }
+    // Revoke-then-issue is one Server Action, so a half-completed rotation — token
+    // revoked, replacement never issued, printed QR code silently dead — is reported
+    // rather than passing for success.
+    const result = await rotateTableToken(token, tableId);
+    setError(result.ok ? null : result.error);
     load();
   };
 
@@ -120,6 +125,15 @@ function Tables() {
             These codes point at <span className="tabular">{SITE_URL}</span>, which a phone
             cannot reach. Set <span className="tabular">NEXT_PUBLIC_SITE_URL</span> to the
             deployed origin before printing.
+          </p>
+        )}
+
+        {error && (
+          <p
+            role="alert"
+            className="mt-5 max-w-lg rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-[0.82rem] text-red-200 print:hidden"
+          >
+            {error}
           </p>
         )}
 
