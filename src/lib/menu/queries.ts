@@ -1,4 +1,6 @@
+import { unstable_cache } from 'next/cache';
 import { getServerClient } from '@/lib/supabase/server';
+import { TAGS } from '@/lib/cache-tags';
 import type {
   BusinessHours,
   BusinessSettings,
@@ -29,14 +31,49 @@ type RawGroup = {
 const num = (v: string | number | null | undefined) => Number(v ?? 0);
 
 /**
+ * How this layer is cached.
+ *
+ * Every page reads the locale cookie, so every page is dynamically RENDERED — but the
+ * menu itself is identical for every visitor, and re-querying Supabase five times to
+ * render five requests of the same unchanged menu is pure waste. Rendering and data
+ * fetching are separate concerns: the pages stay dynamic, the data does not.
+ *
+ * Two rules this must not break:
+ *
+ *   1. **Nothing request-scoped inside a cached function.** `cookies()` and `headers()`
+ *      are unsupported inside a cache scope, and would poison one visitor's cache entry
+ *      with another's locale. Neither function below touches them — the locale is
+ *      applied by the caller, at render time, to data that is already language-neutral
+ *      (both `_en` and `_ar` columns are fetched, and the caller picks).
+ *
+ *   2. **Every write invalidates.** Admin mutations call `updateTag` in
+ *      src/app/admin/actions.ts. Without that, a sold-out item would keep selling on
+ *      the public menu until the revalidate window elapsed.
+ *
+ * `revalidate` is a backstop, not the mechanism: it bounds staleness if a change ever
+ * reaches the database without going through an action (a direct SQL edit, say), so the
+ * site is wrong for at most an hour rather than indefinitely.
+ *
+ * Deliberately `unstable_cache` and not `use cache`: the latter requires the
+ * `cacheComponents` flag, which turns every un-suspended dynamic read into a build
+ * error — and this app reads cookies on every page. Revisit when the pages have
+ * Suspense boundaries.
+ */
+const CACHE_SECONDS = 3600;
+
+/**
  * The whole published menu in one round trip's worth of parallel queries.
  * RLS already filters unavailable items for the anon key, so nothing here needs
  * to re-check availability — but the flag is carried through for the admin views.
  */
-export async function getMenu(): Promise<{
+async function fetchMenu(): Promise<{
   categories: MenuCategory[];
   items: MenuItem[];
 }> {
+  // Printed only on a genuine cache miss, so "is this actually cached?" is answerable
+  // from the server log instead of inferred from response times. tests/cache.test.mjs
+  // counts these lines. Once an hour, or once per admin save — not noisy.
+  console.log('[212] cache MISS: menu fetched from Supabase');
   const supabase = getServerClient();
 
   const [categories, items, groups, options, links] = await Promise.all([
@@ -106,10 +143,16 @@ export async function getMenu(): Promise<{
   };
 }
 
-export async function getBusiness(): Promise<{
+export const getMenu = unstable_cache(fetchMenu, ['menu'], {
+  tags: [TAGS.menu],
+  revalidate: CACHE_SECONDS,
+});
+
+async function fetchBusiness(): Promise<{
   settings: BusinessSettings | null;
   hours: BusinessHours[];
 }> {
+  console.log('[212] cache MISS: business settings fetched from Supabase');
   const supabase = getServerClient();
   const [settings, hours] = await Promise.all([
     supabase
@@ -126,3 +169,8 @@ export async function getBusiness(): Promise<{
     hours: (hours.data ?? []) as BusinessHours[],
   };
 }
+
+export const getBusiness = unstable_cache(fetchBusiness, ['business'], {
+  tags: [TAGS.business],
+  revalidate: CACHE_SECONDS,
+});
