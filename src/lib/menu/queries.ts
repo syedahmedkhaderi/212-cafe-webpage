@@ -51,15 +51,23 @@ const num = (v: string | number | null | undefined) => Number(v ?? 0);
  *      the public menu until the revalidate window elapsed.
  *
  * `revalidate` is a backstop, not the mechanism: it bounds staleness if a change ever
- * reaches the database without going through an action (a direct SQL edit, say), so the
- * site is wrong for at most an hour rather than indefinitely.
+ * reaches the database WITHOUT going through an action — a direct SQL edit, a future POS
+ * integration writing straight to Postgres — so the site is wrong for a bounded time
+ * rather than indefinitely.
+ *
+ * The menu's backstop is deliberately short. Availability is the most time-sensitive
+ * field on the site (a sold-out item that keeps selling is a guest handed a refund), and
+ * a minute of exposure to an out-of-band write is very different from an hour. It costs
+ * at most 60 queries an hour instead of one per request. Business settings — hours,
+ * phone, address — change rarely enough to keep the long window.
  *
  * Deliberately `unstable_cache` and not `use cache`: the latter requires the
  * `cacheComponents` flag, which turns every un-suspended dynamic read into a build
  * error — and this app reads cookies on every page. Revisit when the pages have
  * Suspense boundaries.
  */
-const CACHE_SECONDS = 3600;
+const MENU_CACHE_SECONDS = 60;
+const BUSINESS_CACHE_SECONDS = 3600;
 
 /**
  * The whole published menu in one round trip's worth of parallel queries.
@@ -145,7 +153,7 @@ async function fetchMenu(): Promise<{
 
 export const getMenu = unstable_cache(fetchMenu, ['menu'], {
   tags: [TAGS.menu],
-  revalidate: CACHE_SECONDS,
+  revalidate: MENU_CACHE_SECONDS,
 });
 
 async function fetchBusiness(): Promise<{
@@ -172,5 +180,5 @@ async function fetchBusiness(): Promise<{
 
 export const getBusiness = unstable_cache(fetchBusiness, ['business'], {
   tags: [TAGS.business],
-  revalidate: CACHE_SECONDS,
+  revalidate: BUSINESS_CACHE_SECONDS,
 });

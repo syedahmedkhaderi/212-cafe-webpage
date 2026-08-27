@@ -22,6 +22,33 @@ const nextConfig: NextConfig = {
     return [
       {
         /**
+         * Applied to everything. The CSP itself is NOT here — it carries a per-request
+         * nonce and so has to be generated in src/proxy.ts.
+         */
+        source: '/:path*',
+        headers: [
+          // Two years, preloadable. Only ever sent over HTTPS, so localhost is unaffected.
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
+          // Stop the browser second-guessing Content-Type — the defence against an
+          // uploaded file being re-interpreted as script.
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          // Send the origin cross-site, the full path same-origin. A table token must
+          // never leak in a Referer to an external site.
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          // Belt and braces with frame-ancestors 'none', for older browsers.
+          { key: 'X-Frame-Options', value: 'DENY' },
+          // A café menu needs none of these.
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()',
+          },
+        ],
+      },
+      {
+        /**
          * Menu and hero photography. These are immutable in the strict sense: the file
          * at a given path is never edited, only superseded. `immutable` means a
          * returning visitor does not even send a revalidation request.

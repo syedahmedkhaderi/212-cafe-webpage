@@ -80,12 +80,38 @@ const login = await fetch(`${SUPA}/auth/v1/token?grant_type=password`, {
 });
 const { access_token } = await login.json();
 
+/**
+ * Toggle availability the way the café actually does it — through the admin UI.
+ *
+ * This used to PATCH PostgREST directly, which was equivalent back when every route was
+ * force-dynamic with no data cache. It is not equivalent now: the menu is cached under a
+ * tag, and the Server Action behind the UI is what calls updateTag. A direct write still
+ * changes the database but leaves the public site serving the old menu until the
+ * revalidate backstop elapses, so this test would fail while the product worked.
+ *
+ * Driving the real control keeps the assertion honest — it is the whole "no developer
+ * needed" claim — and exercises the write path that actually exists.
+ */
+const admin = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+const adminPage = await admin.newPage();
+await adminPage.goto(`${BASE}/admin`, { waitUntil: 'load' });
+await adminPage.getByLabel('Email').fill('owner@212cafe.qa');
+await adminPage.getByLabel('Password').fill(PW);
+await adminPage.getByRole('button', { name: 'Sign in' }).click();
+await adminPage.getByText('Live orders').waitFor({ state: 'visible', timeout: 20000 });
+
 const setAvailable = async (name, value) => {
-  await fetch(`${SUPA}/rest/v1/menu_items?name_en=eq.${encodeURIComponent(name)}`, {
-    method: 'PATCH',
-    headers: { apikey: KEY, Authorization: `Bearer ${access_token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ is_available: value }),
-  });
+  const search = adminPage.getByPlaceholder('Search to mark sold out…');
+  await search.fill(name);
+  await adminPage.waitForTimeout(700);
+  const label = value ? 'Mark available' : 'Mark sold out';
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const button = adminPage.getByRole('button', { name: new RegExp(`${label}: ${escaped}`) });
+  if ((await button.count()) === 0) {
+    throw new Error(`no "${label}" toggle for ${name} — is it already in that state?`);
+  }
+  await button.first().click();
+  await adminPage.waitForTimeout(2000);
 };
 
 // A fresh context, pinned to English. Part 1 toggles the ordering app into Arabic,

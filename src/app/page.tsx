@@ -1,3 +1,4 @@
+import { headers } from 'next/headers';
 import Image, { getImageProps } from 'next/image';
 import Link from 'next/link';
 import type { Metadata } from 'next';
@@ -21,12 +22,12 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [{ categories, items }, { settings, hours }, locale, chosen] = await Promise.all([
-    getMenu(),
-    getBusiness(),
-    getLocale(),
-    hasChosenLocale(),
-  ]);
+  const [{ categories, items }, { settings, hours }, locale, chosen, headerList] =
+    await Promise.all([getMenu(), getBusiness(), getLocale(), hasChosenLocale(), headers()]);
+
+  // The CSP allows inline scripts only with the per-request nonce from src/proxy.ts.
+  // Without this the JSON-LD block is blocked and the café loses its rich result.
+  const nonce = headerList.get('x-nonce') ?? undefined;
 
   const tr = translator(locale);
   const rtl = isRTL(locale);
@@ -88,7 +89,11 @@ export default async function HomePage() {
 
   return (
     <div dir={rtl ? 'rtl' : 'ltr'} lang={locale}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script
+        type="application/ld+json"
+        nonce={nonce}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       {/* Offered once, on a visitor's first arrival, then never again. */}
       {!chosen && <LanguagePicker detected={locale} />}
