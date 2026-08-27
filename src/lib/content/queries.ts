@@ -110,3 +110,24 @@ export function contentReader(rows: SiteContentRow[], locale: Locale) {
     return compiled ? compiled[locale] : '';
   };
 }
+
+/**
+ * Only the strings that DIFFER from the compiled dictionary, in one language.
+ *
+ * This is what gets serialised into the RSC payload for client components. Sending the
+ * raw rows instead means every visitor downloads all 46 keys in both languages plus the
+ * admin's `group_name` and `sort_order` — on the same critical path the hero was
+ * optimised for. On an unedited site this returns `{}`.
+ */
+export function copyOverrides(rows: SiteContentRow[], locale: Locale): Record<string, string> {
+  const compiled = COPY as Record<string, { en: string; ar: string }>;
+  const out: Record<string, string> = {};
+
+  for (const row of rows) {
+    const value = locale === 'ar' ? row.value_ar : row.value_en;
+    if (!value || !value.trim()) continue;
+    if (compiled[row.key]?.[locale] === value) continue; // identical to the default
+    out[row.key] = value;
+  }
+  return out;
+}

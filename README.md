@@ -100,7 +100,7 @@ Lighthouse, mobile, against a production build:
 
 | | Homepage | Menu | Ordering app |
 | --- | --- | --- | --- |
-| Performance | 90 | 92 | 92 |
+| Performance | 90–92 | 92–94 | 92–93 |
 | Accessibility | 100 | 100 | 100 |
 | Best practices | 100 | 100 | 100 |
 | SEO | 100 | 100 | n/a |

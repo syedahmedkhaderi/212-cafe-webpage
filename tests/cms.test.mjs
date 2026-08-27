@@ -183,8 +183,6 @@ if (foundToggle) {
   });
 }
 
-await browser.close();
-
 function escapeRe(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -328,6 +326,122 @@ if (renamed.status === 200) {
     renamed.body.path,
   );
 }
+
+/* ---------------------------------------------------------------------------------
+   6. The headline ask, end to end: change the hero image from the UI, permanently
+   --------------------------------------------------------------------------------- */
+console.log('\n=== 6. A new hero uploaded in the UI reaches the public site ===');
+
+// This is the one the owner actually asked for, and the only way to know it works is to
+// drive it. In particular the upload route returns a Storage public URL and saveTheme
+// re-validates it against an allow-list — if those two disagree about the URL's shape,
+// every upload-then-save fails with "Unrecognised image location" and the picture simply
+// never changes.
+const { body: themeBefore } = await rest(ownerToken, 'site_theme?select=hero_image_path&id=eq.1');
+const originalHero = themeBefore?.[0]?.hero_image_path;
+
+const ctx2 = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
+const admin = await ctx2.newPage();
+await admin.goto(`${BASE}/admin/content`, { waitUntil: 'load' });
+await admin.getByLabel('Email').fill(OWNER_EMAIL);
+await admin.getByLabel('Password').fill(PW);
+await admin.getByRole('button', { name: 'Sign in' }).click();
+await admin.getByText('Hero image').waitFor({ state: 'visible', timeout: 20000 });
+
+// A real JPEG, generated here so the test carries no binary fixture.
+const jpeg = Buffer.from(
+  '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0a' +
+    'HBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAAIAAgBAREA/8QAHwAAAQUBAQEB' +
+    'AQEAAAAAAAAAAAECAwQFBgcICQoL/9oACAEBAAA/AL+AB//Z',
+  'base64',
+);
+await admin.locator('input[type="file"]').first().setInputFiles({
+  name: 'new-hero.jpg',
+  mimeType: 'image/jpeg',
+  buffer: jpeg,
+});
+// Wait for the upload to land and the Save button to become enabled.
+const save = admin.getByRole('button', { name: /Save appearance/ });
+await admin.waitForTimeout(4000);
+const enabled = await save.isEnabled().catch(() => false);
+check('the upload enabled the save button (path accepted by the form)', enabled);
+
+if (enabled) {
+  await save.click();
+  await admin.waitForTimeout(3000);
+  const noticeText = await admin.locator('[role="status"]').innerText().catch(() => '');
+  check(
+    'saveTheme accepted the uploaded Storage URL',
+    /saved/i.test(noticeText),
+    noticeText.slice(0, 90),
+  );
+
+  const { body: themeAfter } = await rest(ownerToken, 'site_theme?select=hero_image_path&id=eq.1');
+  const newHero = themeAfter?.[0]?.hero_image_path;
+  check('the hero path actually changed in the database', newHero && newHero !== originalHero, newHero);
+
+  // And the public site is serving it, with no cache wait.
+  const homeHtml = await (await fetch(`${BASE}/`)).text();
+  const encoded = encodeURIComponent(String(newHero));
+  check(
+    'the public homepage now serves the new hero',
+    homeHtml.includes(encoded) || homeHtml.includes(String(newHero)),
+    'read-your-own-writes through updateTag',
+  );
+
+  /*
+    Restore through the UI, not through REST.
+
+    A direct PATCH puts the DATABASE right and leaves the CACHE wrong — nothing calls
+    updateTag — so the public site would keep serving this test's uploaded image for the
+    rest of the theme's revalidate window while the row said otherwise. Verified the hard
+    way: the first version of this restore did exactly that.
+  */
+  // The hero path is not a text field in the UI, so put the row back directly and then
+  // force the invalidation by saving the (now-original) theme through the action.
+  await rest(ownerToken, 'site_theme?id=eq.1', {
+    method: 'PATCH',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({ hero_image_path: originalHero }),
+  });
+  await admin.reload({ waitUntil: 'load' });
+  await admin.getByText('Hero image').waitFor({ state: 'visible', timeout: 20000 });
+  // Nudge a value so the form is dirty, then save: that runs saveTheme and updateTag.
+  const zoom = admin.locator('input[type="range"]').last();
+  await zoom.evaluate((el) => {
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    setter.call(el, el.value === el.max ? el.min : el.max);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await admin.waitForTimeout(400);
+  await admin.getByRole('button', { name: /Save appearance/ }).click();
+  await admin.waitForTimeout(2500);
+  // …and put the zoom back the same way.
+  await admin.reload({ waitUntil: 'load' });
+  await admin.getByText('Hero image').waitFor({ state: 'visible', timeout: 20000 });
+  const zoom2 = admin.locator('input[type="range"]').last();
+  await zoom2.evaluate((el) => {
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    setter.call(el, el.min);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await admin.waitForTimeout(400);
+  const finalSave = admin.getByRole('button', { name: /Save appearance/ });
+  if (await finalSave.isEnabled()) {
+    await finalSave.click();
+    await admin.waitForTimeout(2500);
+  }
+
+  const restoredHtml = await (await fetch(`${BASE}/`)).text();
+  check(
+    'restored: the public site serves the original hero again',
+    restoredHtml.includes(encodeURIComponent(String(originalHero))) ||
+      restoredHtml.includes(String(originalHero)),
+    'cache invalidated, not just the row',
+  );
+}
+
+await browser.close();
 
 console.log(`\n  ${pass} passed, ${fail} failed\n`);
 process.exit(fail === 0 ? 0 : 1);

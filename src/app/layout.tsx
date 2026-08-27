@@ -4,7 +4,7 @@ import './globals.css';
 import { SITE_URL } from '@/lib/site-url';
 import { getLocale } from '@/lib/locale-server';
 import { isRTL } from '@/lib/i18n';
-import { getContentRows, getTheme } from '@/lib/content/queries';
+import { copyOverrides, getContentRows, getTheme } from '@/lib/content/queries';
 import { CopyProvider } from '@/lib/content/provider';
 import { brassVariants } from '@/lib/content/contrast';
 
@@ -112,7 +112,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <style dangerouslySetInnerHTML={{ __html: themeCss }} />
       </head>
       <body>
-        <CopyProvider rows={contentRows} locale={locale}>
+        <CopyProvider overrides={copyOverrides(contentRows, locale)}>
           {children}
         </CopyProvider>
       </body>
