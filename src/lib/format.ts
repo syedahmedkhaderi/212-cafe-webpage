@@ -1,5 +1,15 @@
 import type { BusinessHours, Locale } from '@/lib/types';
 
+/**
+ * Swap an em/en dash used as a parenthetical break for a comma. The café owner does not
+ * want dashes in the display copy; the compiled dictionary and the seed migrations are
+ * clean, but a row already saved in `site_content` may still hold one, so headline copy
+ * is passed through this on the way out rather than trusting the stored value.
+ */
+export function stripDash(text: string): string {
+  return text.replace(/\s*[—–]{1,2}\s*/g, ', ');
+}
+
 /** Prices always render with Latin digits so QAR figures read the same in both
  *  locales — a café price list is not the place for numeral-system surprises. */
 export function money(amount: number, currency = 'QAR'): string {

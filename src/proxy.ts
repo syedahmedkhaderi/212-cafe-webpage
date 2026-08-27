@@ -53,7 +53,13 @@ export function proxy(request: NextRequest) {
     // Server Actions post back to this origin; without this they are blocked.
     `form-action 'self'`,
     `frame-ancestors 'none'`,
-    `upgrade-insecure-requests`,
+    // Production only. Over HTTP, this tells the browser to reissue every subresource
+    // request as HTTPS — which is exactly right on the deployed site and exactly wrong
+    // for `next dev`, where there is no TLS listener. Chrome exempts http://localhost
+    // from the upgrade; WebKit (Safari) does not, so with this on in dev Safari upgrades
+    // every /_next/ asset to https://localhost, hits a TLS error, and renders the page
+    // with no CSS, no JS, and broken images.
+    ...(isDev ? [] : [`upgrade-insecure-requests`]),
   ].join('; ');
 
   const requestHeaders = new Headers(request.headers);
