@@ -1,3 +1,4 @@
+import COPY_JSON from './copy.json';
 import type { Locale } from '@/lib/types';
 
 export const LOCALES: Locale[] = ['en', 'ar'];
@@ -11,107 +12,22 @@ export function normaliseLocale(value: string | undefined | null): Locale {
 }
 
 /**
- * Marketing copy. Item names, descriptions and category names are NOT here — those
- * come from the database, where all 53 items already carry an Arabic name and 34
- * carry an Arabic description. This dictionary covers only the chrome around them.
+ * Marketing copy — the chrome around the menu.
+ *
+ * The dictionary itself lives in copy.json rather than inline here, because two things
+ * need to read it: this module, and data/generate-content-seed.mjs, which seeds the
+ * editable `site_content` table from it. One source, so the compiled fallback and the
+ * database can never disagree about what the default copy is.
+ *
+ * Item names, descriptions and category names are NOT here — those come from the
+ * database, where all 53 items already carry an Arabic name.
  */
-const COPY = {
-  // ---- chrome
-  brandTagline: { en: 'Lusail’s Best View', ar: 'أجمل إطلالة في لوسيل' },
-  navView: { en: 'The View', ar: 'الإطلالة' },
-  navSignatures: { en: 'Signatures', ar: 'الأطباق المميزة' },
-  navMenu: { en: 'Menu', ar: 'القائمة' },
-  navVisit: { en: 'Visit', ar: 'زورونا' },
-  fullMenu: { en: 'Full Menu', ar: 'القائمة الكاملة' },
-  openMenu: { en: 'Open menu', ar: 'فتح القائمة' },
-  closeMenu: { en: 'Close menu', ar: 'إغلاق القائمة' },
-  back: { en: 'Back', ar: 'رجوع' },
+const COPY: Record<string, { en: string; ar: string }> = COPY_JSON;
 
-  // ---- hero
-  heroLocation: {
-    en: 'Marina Twin Tower A · 30th Floor · Lusail',
-    ar: 'برج مارينا التوأم أ · الطابق الثلاثون · لوسيل',
-  },
-  heroLine1: { en: 'Coffee', ar: 'قهوة' },
-  heroLine2: { en: 'above the city', ar: 'فوق المدينة' },
-  heroSub: {
-    en: 'Specialty coffee, desserts and brunch, thirty floors over Lusail Marina.',
-    ar: 'قهوة مختصة وحلويات وفطور متأخر، على ارتفاع ثلاثين طابقاً فوق مارينا لوسيل.',
-  },
-  exploreMenu: { en: 'Explore the menu', ar: 'تصفح القائمة' },
-  findUs: { en: 'Find us', ar: 'موقعنا' },
-  openNow: { en: 'Open now', ar: 'مفتوح الآن' },
-  closedNow: { en: 'Closed', ar: 'مغلق' },
-
-  // ---- view
-  viewEyebrow: { en: 'The View', ar: 'الإطلالة' },
-  viewTitle: {
-    en: 'Lusail’s best view — and we mean it.',
-    ar: 'أجمل إطلالة في لوسيل — ونعني ذلك.',
-  },
-  viewBody1: {
-    en: 'From the 30th floor of Marina Twin Tower A, the Katara Towers curve out of the marina and the Gulf runs to the horizon. Every table is a window seat.',
-    ar: 'من الطابق الثلاثين في برج مارينا التوأم أ، تنحني أبراج كتارا خارجة من المارينا ويمتد الخليج حتى الأفق. كل طاولة هنا بإطلالة.',
-  },
-  viewBody2: {
-    en: 'It is the reason people come once, and the reason they come back.',
-    ar: 'هو السبب في أن يزورنا الناس أول مرة، والسبب في عودتهم.',
-  },
-
-  // ---- signatures
-  signaturesEyebrow: { en: 'Signatures', ar: 'الأطباق المميزة' },
-  signaturesTitle: { en: 'What we are known for', ar: 'ما نشتهر به' },
-  signatureTag: { en: 'Signature', ar: 'مميز' },
-
-  // ---- menu section
-  menuEyebrow: { en: 'The Menu', ar: 'القائمة' },
-  menuTitle: { en: 'things worth the lift', ar: 'صنفاً تستحق الصعود' },
-  viewFullMenu: { en: 'View full menu', ar: 'عرض القائمة كاملة' },
-  itemsCount: { en: 'items', ar: 'صنفاً' },
-  from: { en: 'from', ar: 'ابتداءً من' },
-
-  // ---- menu page
-  menuPageTitle: { en: 'Everything we serve', ar: 'كل ما نقدمه' },
-  menuPageSub: {
-    en: 'sections. Prices in Qatari riyal.',
-    ar: 'أقسام. الأسعار بالريال القطري.',
-  },
-  across: { en: 'across', ar: 'في' },
-
-  // ---- visit
-  visitEyebrow: { en: 'Visit', ar: 'زورونا' },
-  visitTitle: { en: 'Thirty floors up', ar: 'ثلاثون طابقاً للأعلى' },
-  getDirections: { en: 'Get directions', ar: 'الاتجاهات' },
-  hours: { en: 'Hours', ar: 'ساعات العمل' },
-  closed: { en: 'Closed', ar: 'مغلق' },
-  hoursNote: {
-    en: 'Hours are managed by the café and update here automatically.',
-    ar: 'يدير المقهى ساعات العمل وتُحدَّث هنا تلقائياً.',
-  },
-
-  // ---- footer
-  footerBlurb: {
-    en: 'Specialty coffee, desserts and brunch — 30 floors above Lusail Marina.',
-    ar: 'قهوة مختصة وحلويات وفطور متأخر — ثلاثون طابقاً فوق مارينا لوسيل.',
-  },
-  footerAddress: {
-    en: 'Marina Twin Tower A, 30th Floor, Lusail, Qatar',
-    ar: 'برج مارينا التوأم أ، الطابق الثلاثون، لوسيل، قطر',
-  },
-  staffSignIn: { en: 'Staff', ar: 'الموظفون' },
-
-  // ---- language picker
-  chooseLanguage: { en: 'Choose your language', ar: 'اختر لغتك' },
-  languageEnglish: { en: 'English', ar: 'English' },
-  languageArabic: { en: 'العربية', ar: 'العربية' },
-  switchToArabic: { en: 'التبديل إلى العربية', ar: 'التبديل إلى العربية' },
-  switchToEnglish: { en: 'Switch to English', ar: 'Switch to English' },
-} as const;
-
-export type CopyKey = keyof typeof COPY;
+export type CopyKey = keyof typeof COPY_JSON;
 
 export function t(key: CopyKey, locale: Locale): string {
-  return COPY[key][locale];
+  return COPY[key as string][locale];
 }
 
 /** Bound translator, so components read `tr('heroSub')` rather than repeating the locale. */

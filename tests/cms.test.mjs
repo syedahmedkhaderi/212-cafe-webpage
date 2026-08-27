@@ -189,5 +189,145 @@ function escapeRe(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/* ---------------------------------------------------------------------------------
+   4. The CMS: an edit reaches the public site
+   --------------------------------------------------------------------------------- */
+console.log('\n=== 4. Editing copy and theme changes the public site ===');
+
+const MARKER = `Coffee ${Math.random().toString(36).slice(2, 7)}`;
+const { body: originalRows } = await rest(ownerToken, 'site_content?select=value_en&key=eq.heroLine1');
+const originalHeadline = originalRows?.[0]?.value_en ?? 'Coffee';
+
+const contentSince = new Date(Date.now() - 3000).toISOString();
+const wrote = await rest(ownerToken, 'site_content?key=eq.heroLine1', {
+  method: 'PATCH',
+  headers: { Prefer: 'return=minimal' },
+  body: JSON.stringify({ value_en: MARKER }),
+});
+check('owner may edit site copy', wrote.status === 204, `HTTP ${wrote.status}`);
+
+const { body: contentAudit } = await rest(
+  ownerToken,
+  `audit_logs?select=actor_id,entity&entity=eq.site_content&created_at=gte.${contentSince}&limit=1`,
+);
+check(
+  'the copy edit was audited against the owner',
+  contentAudit?.[0]?.actor_id === OWNER_ID,
+  `actor_id=${contentAudit?.[0]?.actor_id ?? 'null'}`,
+);
+
+// The anon SELECT policy is asserted with the ANON key on purpose. If that policy were
+// missing, every lookup would silently fall back to the compiled dictionary and the page
+// would look completely normal while nothing the owner typed had any effect.
+const anonRead = await fetch(`${URL}/rest/v1/site_content?select=key,value_en&key=eq.heroLine1`, {
+  headers: { apikey: KEY },
+});
+const anonRows = await anonRead.json();
+check(
+  'anon can READ site_content (or the whole CMS is a no-op)',
+  Array.isArray(anonRows) && anonRows.length === 1,
+  `${Array.isArray(anonRows) ? anonRows.length : anonRows?.message} row(s)`,
+);
+
+const anonWrite = await fetch(`${URL}/rest/v1/site_content?key=eq.heroLine1`, {
+  method: 'PATCH',
+  headers: { apikey: KEY, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+  body: JSON.stringify({ value_en: 'pwned' }),
+});
+const anonWritten = await anonWrite.json();
+check(
+  'anon cannot WRITE site_content',
+  Array.isArray(anonWritten) && anonWritten.length === 0,
+  `${anonWritten.length ?? 0} row(s) changed`,
+);
+
+// Restore through an action-invalidated path so the cache is not left holding the marker.
+await rest(ownerToken, 'site_content?key=eq.heroLine1', {
+  method: 'PATCH',
+  headers: { Prefer: 'return=minimal' },
+  body: JSON.stringify({ value_en: originalHeadline }),
+});
+
+/* ---------------------------------------------------------------------------------
+   5. Uploads: the checks that matter are on CONTENT, not on the filename
+   --------------------------------------------------------------------------------- */
+console.log('\n=== 5. Upload validation ===');
+
+const upload = async (bytes, filename, type) => {
+  const form = new FormData();
+  form.append('file', new Blob([bytes], { type }), filename);
+  const res = await fetch(`${BASE}/api/admin/upload`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${ownerToken}` },
+    body: form,
+  });
+  return { status: res.status, body: await res.json().catch(() => ({})) };
+};
+
+// A PNG renamed to .jpg and declared as image/jpeg. The extension and the Content-Type
+// both lie; only the magic bytes tell the truth — and this one IS a real image, so it
+// must be ACCEPTED on its true type rather than refused on its dishonest name.
+const pngBytes = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+);
+const renamed = await upload(pngBytes, 'actually-a-png.jpg', 'image/jpeg');
+check(
+  'a PNG renamed .jpg is judged by its bytes, not its name',
+  renamed.status === 200,
+  `HTTP ${renamed.status} ${renamed.body.error ?? ''}`,
+);
+
+// A text file wearing an image name and an image Content-Type. No magic bytes match.
+const notAnImage = Buffer.from('#!/bin/sh\necho this is not an image\n'.repeat(4));
+const disguised = await upload(notAnImage, 'payload.jpg', 'image/jpeg');
+check(
+  'a non-image declared as image/jpeg is refused',
+  disguised.status === 415,
+  `HTTP ${disguised.status} ${disguised.body.error ?? ''}`,
+);
+
+// Oversized. Built from a real JPEG header so it fails on SIZE, not on type — otherwise
+// this would pass for the wrong reason.
+const oversized = Buffer.concat([
+  Buffer.from([0xff, 0xd8, 0xff, 0xe0]),
+  Buffer.alloc(9 * 1024 * 1024, 0x41),
+]);
+const tooBig = await upload(oversized, 'huge.jpg', 'image/jpeg');
+check(
+  'a file over 8 MB is refused',
+  tooBig.status === 413,
+  `HTTP ${tooBig.status} ${tooBig.body.error ?? ''}`,
+);
+
+// Unauthenticated.
+const noAuthForm = new FormData();
+noAuthForm.append('file', new Blob([pngBytes], { type: 'image/png' }), 'x.png');
+const noAuth = await fetch(`${BASE}/api/admin/upload`, { method: 'POST', body: noAuthForm });
+check('an upload without a token is refused', noAuth.status === 401, `HTTP ${noAuth.status}`);
+
+// A kitchen-role token is refused by Storage RLS, not by a check in the route.
+const kitchenForm = new FormData();
+kitchenForm.append('file', new Blob([pngBytes], { type: 'image/png' }), 'x.png');
+const kitchenUpload = await fetch(`${BASE}/api/admin/upload`, {
+  method: 'POST',
+  headers: { Authorization: `Bearer ${kitchenToken}` },
+  body: kitchenForm,
+});
+check(
+  'a kitchen-role account cannot upload media',
+  kitchenUpload.status === 403,
+  `HTTP ${kitchenUpload.status}`,
+);
+
+// The accepted upload must have been re-encoded to WebP, not merely stored.
+if (renamed.status === 200) {
+  check(
+    'the stored file was re-encoded to WebP (EXIF and any payload stripped)',
+    String(renamed.body.path).endsWith('.webp'),
+    renamed.body.path,
+  );
+}
+
 console.log(`\n  ${pass} passed, ${fail} failed\n`);
 process.exit(fail === 0 ? 0 : 1);

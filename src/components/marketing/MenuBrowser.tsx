@@ -5,7 +5,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { MenuCategory, MenuItem, Locale } from '@/lib/types';
 import { localised } from '@/lib/types';
 import { money } from '@/lib/format';
-import { isRTL, translator } from '@/lib/i18n';
+import { isRTL } from '@/lib/i18n';
+import { useCopy } from '@/lib/content/provider';
 import { hasUsablePhoto } from '@/lib/site';
 
 type Props = {
@@ -16,7 +17,7 @@ type Props = {
 };
 
 export function MenuBrowser({ categories, items, locale }: Props) {
-  const tr = translator(locale);
+  const tr = useCopy(locale);
   const rtl = isRTL(locale);
   const [active, setActive] = useState(categories[0]?.id ?? '');
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});

@@ -3,12 +3,12 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { INSTAGRAM_URL, MAPS_URL } from '@/lib/site';
-import { translator } from '@/lib/i18n';
+import { useCopy } from '@/lib/content/provider';
 import type { Locale } from '@/lib/types';
 import { LanguageSwitch } from './LanguageSwitch';
 
 export function SiteHeader({ locale }: { locale: Locale }) {
-  const tr = translator(locale);
+  const tr = useCopy(locale);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -145,7 +145,7 @@ export function SiteFooter({
   email: string;
   instagram: string;
 }) {
-  const tr = translator(locale);
+  const tr = useCopy(locale);
 
   return (
     <footer className="border-t border-[var(--line)] bg-[var(--bg)]">

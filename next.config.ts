@@ -1,7 +1,20 @@
 import type { NextConfig } from 'next';
 
+/** Supabase Storage host, for admin-uploaded media. Derived, never hard-coded. */
+const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+  : undefined;
+
 const nextConfig: NextConfig = {
   images: {
+    /**
+     * Without this, every admin-uploaded image 400s through next/image — the CMS would
+     * appear to save correctly and then show broken pictures. Scoped to this project's
+     * Storage host and to the public media path, not a wildcard.
+     */
+    remotePatterns: supabaseHost
+      ? [{ protocol: 'https', hostname: supabaseHost, pathname: '/storage/v1/object/public/media/**' }]
+      : [],
     /**
      * Next 16 changed the default from "any quality" to exactly `[75]`, and silently
      * coerces any other `quality` prop to the nearest allowed value. The hero is the

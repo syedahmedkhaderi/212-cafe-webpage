@@ -4,13 +4,14 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getBusiness, getMenu } from '@/lib/menu/queries';
 import { clock, dayName, isOpenNow, money } from '@/lib/format';
-import { HERO, HERO_IMAGE, INSTAGRAM_URL, MAPS_URL, VIEW_HERO, VIEW_IMAGES } from '@/lib/site';
+import { HERO, INSTAGRAM_URL, MAPS_URL, VIEW_HERO, VIEW_IMAGES } from '@/lib/site';
 import { SiteFooter, SiteHeader } from '@/components/marketing/SiteChrome';
 import { LanguagePicker } from '@/components/marketing/LanguageSwitch';
 import { SITE_URL } from '@/lib/site-url';
 import { getLocale, hasChosenLocale } from '@/lib/locale-server';
-import { isRTL, translator } from '@/lib/i18n';
+import { isRTL } from '@/lib/i18n';
 import { localised } from '@/lib/types';
+import { contentReader, getContentRows, getTheme } from '@/lib/content/queries';
 
 // Reading the locale cookie already forces dynamic rendering, so this is explicit
 // rather than relying on a revalidate window that would never apply. Availability and
@@ -22,14 +23,23 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [{ categories, items }, { settings, hours }, locale, chosen, headerList] =
-    await Promise.all([getMenu(), getBusiness(), getLocale(), hasChosenLocale(), headers()]);
+  const [{ categories, items }, { settings, hours }, locale, chosen, headerList, contentRows, theme] =
+    await Promise.all([
+      getMenu(),
+      getBusiness(),
+      getLocale(),
+      hasChosenLocale(),
+      headers(),
+      getContentRows(),
+      getTheme(),
+    ]);
 
   // The CSP allows inline scripts only with the per-request nonce from src/proxy.ts.
   // Without this the JSON-LD block is blocked and the café loses its rich result.
   const nonce = headerList.get('x-nonce') ?? undefined;
 
-  const tr = translator(locale);
+  // Editable copy, falling back to the compiled dictionary for any missing key.
+  const tr = contentReader(contentRows, locale);
   const rtl = isRTL(locale);
   const signatures = items.filter((i) => i.is_signature && i.is_available);
   const available = items.filter((i) => i.is_available);
@@ -51,17 +61,28 @@ export default async function HomePage() {
   const heroCommon = { alt: heroAlt, sizes: '100vw', priority: true, quality: 85 };
   const {
     props: { srcSet: heroWideSrcSet },
-  } = getImageProps({ ...heroCommon, src: HERO.wide, width: HERO.width, height: HERO.height });
+  } = getImageProps({
+    ...heroCommon,
+    src: theme.hero_image_path,
+    width: HERO.width,
+    height: HERO.height,
+  });
   const {
     props: { srcSet: heroPortraitSrcSet, ...heroImgProps },
-  } = getImageProps({ ...heroCommon, src: HERO.portrait, width: 675, height: 900 });
+  } = getImageProps({ ...heroCommon, src: theme.hero_portrait_path, width: 675, height: 900 });
+
+  // Framing the owner controls from /admin/content, without needing a re-crop.
+  const heroFraming = {
+    objectPosition: `${theme.hero_focal_x}% ${theme.hero_focal_y}%`,
+    transform: theme.hero_zoom > 1 ? `scale(${theme.hero_zoom})` : undefined,
+  };
 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CafeOrCoffeeShop',
     name: '212 Café',
     alternateName: '٢١٢ كافيه',
-    image: `${SITE_URL}${HERO_IMAGE}`,
+    image: `${SITE_URL}${theme.hero_image_path}`,
     telephone: settings?.phone,
     email: settings?.email,
     priceRange: 'QAR 50–100',
@@ -113,7 +134,8 @@ export default async function HomePage() {
             <img
               {...heroImgProps}
               alt={heroAlt}
-              className="absolute inset-0 h-full w-full object-cover object-center opacity-85"
+              style={heroFraming}
+              className="absolute inset-0 h-full w-full object-cover opacity-85"
             />
           </picture>
 

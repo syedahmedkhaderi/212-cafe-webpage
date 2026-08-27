@@ -26,6 +26,7 @@ Three exceptions, each flagged rather than blended in:
 | `/menu` | Public | Full bilingual menu, EN/AR with correct RTL |
 | `/order/[tableToken]` | Guest | Scan-to-order: browse, configure, cart, submit, track |
 | `/admin` | Staff | Live orders, today's revenue, top items, sold-out toggles |
+| `/admin/content` | Manager+ | Hero image, brand colours, fonts, every string EN/AR, category photos, signature picks, draft approvals |
 | `/admin/activity` | Owner/admin | Audit trail of every menu, hours, staff and token change |
 | `/admin/tables` | Manager+ | Printable QR codes, token rotation |
 | `/kitchen` | Kitchen | Three-column display: New → Preparing → Ready |
@@ -41,6 +42,31 @@ Three exceptions, each flagged rather than blended in:
 `./start.sh reset` to clear the order board and re-seed a believable demo set.
 
 Database migrations are in `supabase/migrations/`, applied in filename order.
+
+### Editing the site without a developer
+
+Sign in at `/admin` (linked discreetly from the site footer) and open **Site content**:
+
+| Tab | What it changes |
+| --- | --- |
+| Appearance | Hero image (wide + phone crops), focal point and zoom, brand colours, fonts |
+| Copy | All 46 marketing strings, English and Arabic side by side |
+| Menu | Category photographs, which items are signatures, and the 19 drafted descriptions awaiting approval |
+
+Every save is live on the public site immediately — it writes through a Server Action
+that invalidates the cache in the same step — and is recorded in `audit_logs` against
+the person who made it.
+
+Changes live in the database. To make a **fresh clone** reproduce them:
+
+```bash
+EXPORT_EMAIL=you@212cafe.qa EXPORT_PASSWORD=… node scripts/export-content.mjs
+```
+
+It writes `supabase/migrations/0009_configured_site.sql`, downloads any uploaded images
+into `public/uploads/`, and prints the git command. It never commits by itself, and it
+must sign in as staff — RLS hides switched-off items from the anonymous key, so an
+anonymous export would silently omit them.
 `0003_seed.sql` is generated — regenerate with `node data/generate-seed.mjs`.
 
 **Set `NEXT_PUBLIC_SITE_URL` to the deployed origin before printing QR codes.**
@@ -106,10 +132,15 @@ public. Everything it can do is bounded by RLS and three guarded database functi
 node tests/arabic-site.test.mjs             # language switching across every surface
 node tests/live-demo.test.mjs               # the pitch choreography, end to end
 node tests/rtl-availability-fidelity.test.mjs
+node tests/cms.test.mjs                     # admin write path, audit actor, upload validation
+node tests/cache.test.mjs                   # the cache hits, and a save invalidates it
+node tests/csp.test.mjs                     # Realtime and QR codes survive the CSP
 ./start.sh reset                            # tidy the board afterwards
 ```
 
-87 assertions in total, all passing.
+All passing. Three of these exist because the failure they catch is invisible:
+a cached menu that never invalidates, a blocked WebSocket that silently stops the
+dashboard updating, and an admin write that lands with a null audit actor.
 
 Design and architecture rationale, including what was measured rather than assumed,
 is in [`docs/DECISIONS.md`](docs/DECISIONS.md).

@@ -173,3 +173,88 @@ token cannot be used to fill the counter table. `order_rate_limit` has RLS enabl
 A throttled request returns **HTTP 429**, not 500: the exception uses SQLSTATE `PT429`,
 which PostgREST maps to that status. The ordering app shows "please wait a moment"
 rather than a generic failure. Verified in `tests/audit-ratelimit.test.mjs` (13/13).
+
+## 10. Admin writes go through Server Actions, forwarding the staff member's JWT
+
+**Decision.** Admin mutations that touch cached data live in `src/app/admin/actions.ts`.
+Each takes the signed-in manager's access token and builds a **per-call** Supabase client
+carrying it as a bearer token.
+
+**Why not `@supabase/ssr`.** The session is stored in localStorage by the plain
+`createClient` in `supabase/client.ts`, so nothing server-side can read it from a cookie.
+Migrating to cookie-backed sessions would touch `useStaffSession`, `AdminShell`, the
+Realtime auth in `live.ts`, and all three green browser suites — to buy exactly what
+forwarding the token already gives.
+
+**Why it is safe.** The token is not trusted. Postgres validates the JWT signature and
+RLS enforces `private.can_manage()`, so a forged or expired token fails at the database.
+Zod validates *shape*, never authority.
+
+⚠️ **Never memoize that client.** `getServerClient()` constructs a new client per call and
+`getActionClient()` must too — a module-scoped client holding an `Authorization` header
+would leak one staff member's token into another's request.
+
+**How we know the token actually arrives.** `log_audit()` records `auth.uid()`. A write
+that lands with a **null** actor means the JWT never reached the Postgres session and the
+row was written as somebody else — a silent failure worse than a refusal. `tests/cms.test.mjs`
+asserts `audit_logs.actor_id` is the owner's uuid after a toggle through the real UI.
+
+## 11. `updateTag`, not `revalidateTag`
+
+**Decision.** The data layer is wrapped in `unstable_cache` with tags; admin actions call
+`updateTag`.
+
+**Why.** In Next 16 `revalidateTag(tag, 'max')` is **stale-while-revalidate** — the next
+reader still gets the old menu. That is the sold-out-toggle bug in a new place. The bare
+`revalidateTag(tag)` has the right semantics but is deprecated and warns. `updateTag`
+expires the tag immediately, is the supported read-your-own-writes API, and emits no
+warning. Both reach the same tag manifest that `unstable_cache` writes into, so tags
+registered there are invalidated by either.
+
+`updateTag` **throws in Route Handlers** (`workStore.page.endsWith('/route')`). That is
+why `/api/admin/upload` returns a path and the Server Action that persists it is what
+invalidates.
+
+**Not `use cache`.** It requires the `cacheComponents` flag, which turns every
+un-suspended dynamic read into a build error — and this app reads cookies on every page.
+
+**Consequence to know about.** A write that reaches Postgres *without* going through an
+action — direct SQL, a future POS integration — does not invalidate anything. The
+`revalidate` backstop bounds that: 60s for the menu (availability is the time-sensitive
+field), an hour for business settings. `tests/rtl-availability-fidelity.test.mjs` used to
+PATCH PostgREST directly and had to be changed to drive the real admin control, which is
+the same lesson in test form.
+
+## 12. Uploads are re-encoded, not merely validated
+
+**Decision.** `/api/admin/upload` checks size, then real type by **magic bytes** (never the
+filename or the declared Content-Type), then dimensions, then re-encodes through `sharp`
+to WebP.
+
+**Why the re-encode is the part that matters.** The output is generated from decoded
+pixels, so EXIF, colour-profile payloads, appended archives and polyglot files that are
+simultaneously a valid image and a valid script do not survive. Whatever goes in, what
+comes out is pixels. The checks before it are there to fail fast and cheaply.
+
+Storage RLS (`managers upload media`) is the authorisation boundary, not a check in the
+route — a kitchen-role token is refused by Postgres. Verified in `tests/cms.test.mjs`:
+a PNG renamed `.jpg` is accepted **on its true type**, a text file declared `image/jpeg`
+is refused 415, a 9 MB file is refused 413, and a kitchen account is refused 403.
+
+## 13. The CMS falls back to the compiled dictionary — which is also a trap
+
+**Decision.** `contentReader()` returns the database value, falling back to
+`src/lib/copy.json` for any missing or empty key.
+
+**Why.** A missing row, a failed query or a half-finished translation renders the designed
+default instead of a blank space where a headline should be.
+
+⚠️ **Why that needs a specific test.** If the anon SELECT policy on `site_content` were
+missing, every lookup would fall through to the dictionary and the site would look
+**completely normal** — while nothing the owner typed had any effect. The fallback hides
+the failure perfectly. `tests/cms.test.mjs` therefore asserts the policy directly with the
+**anon key**, not by looking at a rendered page.
+
+The same reasoning applies to `scripts/export-content.mjs`, which must sign in as staff:
+RLS hides unavailable items from anon, so an anonymous export silently omitted five
+switched-off items and still printed a cheerful success.
