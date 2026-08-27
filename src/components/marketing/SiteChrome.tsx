@@ -188,7 +188,7 @@ export function SiteFooter({
             URL — and an unlinked URL is not a security control. RLS is what actually
             guards /admin: an account without a staff row gets zero rows back.
           */}
-          <Link href="/admin" className="text-xs text-[var(--muted)]/70 transition-colors hover:text-brass">
+          <Link href="/admin" className="text-xs text-[var(--muted)] transition-colors hover:text-brass">
             {tr('staffSignIn')}
           </Link>
         </div>

@@ -86,12 +86,32 @@ function SignIn({ title }: { title: string }) {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const { error: signInError } = await getBrowserClient().auth.signInWithPassword({
-      email: email.trim(),
+
+    const supabase = getBrowserClient();
+    const address = email.trim();
+
+    /**
+     * A brake on password guessing, counted in the database (see migration 0010) rather
+     * than here — a limit enforced in the browser is a suggestion. Ten attempts per five
+     * minutes per address: a mistyped password never notices it, a dictionary does.
+     */
+    const { data: allowed } = await supabase.rpc('check_auth_rate_limit', { p_email: address });
+    if (allowed === false) {
+      setError('Too many attempts. Please wait a few minutes and try again.');
+      setBusy(false);
+      return;
+    }
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: address,
       password,
     });
+
     // Deliberately vague: never reveal whether an address exists.
     if (signInError) setError('Those details did not work. Please try again.');
+    // A successful sign-in clears the budget, so a forgetful morning costs nothing later.
+    else await supabase.rpc('clear_auth_rate_limit', { p_email: address });
+
     setBusy(false);
   };
 

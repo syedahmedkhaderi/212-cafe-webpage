@@ -150,7 +150,7 @@ export function MenuBrowser({ categories, items, locale }: Props) {
         );
       })}
 
-      <p className="pb-4 text-center text-xs text-[var(--muted)]/60">
+      <p className="pb-4 text-center text-xs text-[var(--muted)]">
         {rtl ? 'الأسعار بالريال القطري' : 'Prices in Qatari riyal'}
       </p>
     </div>

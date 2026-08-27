@@ -6,6 +6,7 @@ import { getLocale } from '@/lib/locale-server';
 import { isRTL } from '@/lib/i18n';
 import { getContentRows, getTheme } from '@/lib/content/queries';
 import { CopyProvider } from '@/lib/content/provider';
+import { brassVariants } from '@/lib/content/contrast';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
@@ -92,12 +93,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
    * a database CHECK constraint before it can reach this string — which matters, because
    * this is interpolated into a stylesheet.
    *
-   * ⚠ The default palette is the one whose contrast was measured (brass-ink is 5.03:1 on
-   * the light card; the lighter brass is 3.44:1 and fails AA for body text). A markedly
-   * different brass will not automatically satisfy that, and re-checking contrast is not
-   * something this can do for the owner.
+   * The two brass variants are DERIVED so they actually meet contrast, rather than mixed
+   * at a fixed ratio. A fixed `color-mix` was tried first and produced 3.78:1 for small
+   * brass text on bone — below AA, and it dropped the menu page's accessibility score
+   * from 100 to 96. brassVariants() steps each shade until it measurably passes, so the
+   * owner cannot pick a colour that makes small text unreadable without noticing.
    */
-  const themeCss = `:root{--color-ink:${theme.brand_ink};--color-bone:${theme.brand_bone};--color-brass:${theme.brand_brass};--color-brass-lit:color-mix(in oklab,${theme.brand_brass} 74%,white);--color-brass-ink:color-mix(in oklab,${theme.brand_brass} 88%,black);}`;
+  const { brassInk, brassLit } = brassVariants(theme.brand_brass, theme.brand_bone, theme.brand_ink);
+  const themeCss = `:root{--color-ink:${theme.brand_ink};--color-bone:${theme.brand_bone};--color-brass:${theme.brand_brass};--color-brass-lit:${brassLit};--color-brass-ink:${brassInk};}`;
 
   return (
     <html

@@ -16,12 +16,23 @@ const nextConfig: NextConfig = {
       ? [{ protocol: 'https', hostname: supabaseHost, pathname: '/storage/v1/object/public/media/**' }]
       : [],
     /**
-     * Next 16 changed the default from "any quality" to exactly `[75]`, and silently
-     * coerces any other `quality` prop to the nearest allowed value. The hero is the
-     * first thing anyone sees and is the one place worth spending bytes on, so 85 has
-     * to be declared here or the `quality={85}` on it would quietly become 75.
+     * AVIF first. This is NOT the default — Next 16 negotiates WebP only unless AVIF is
+     * listed here, so the hero was being served WebP even to browsers advertising AVIF.
+     * On a detailed photograph like the sunset frame that is a large, free saving.
      */
-    qualities: [75, 85],
+    formats: ['image/avif', 'image/webp'],
+
+    /**
+     * 75 only, which is Next's default set.
+     *
+     * The hero was briefly served at 85 on the reasoning that it is the first thing
+     * anyone sees. Measured, that was wrong: the stored master is ALREADY a q84 WebP
+     * produced by data/optimize-hero.mjs, so re-encoding it at 85 does not recover
+     * detail that is no longer in the file — it just preserves the existing artifacts
+     * at a higher bitrate. It cost 44 KB on the largest-contentful-paint image of the
+     * whole site (156 KB vs 112 KB at 640px) for no visible difference.
+     */
+    qualities: [75],
     /**
      * Next 16 already defaults this to 4 hours (up from 60s). Pinned to 30 days because
      * these are content-addressed build assets that never change in place — a menu

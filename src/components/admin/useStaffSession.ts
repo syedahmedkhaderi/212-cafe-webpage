@@ -26,6 +26,41 @@ export function useStaffSession(): StaffSession {
     fullName: '',
   });
 
+  /**
+   * Idle timeout.
+   *
+   * An admin tablet left on the pass in a busy café is signed in to the whole dashboard.
+   * After 30 minutes without any interaction the session is ended, so walking away is
+   * not the same as handing over the till.
+   *
+   * This is defence in depth and not a security boundary — it runs in the browser, and a
+   * determined holder of the device could stop it. RLS is what actually decides what a
+   * session may do. It closes the ordinary case: an unattended screen.
+   */
+  useEffect(() => {
+    if (!state.session) return;
+
+    const IDLE_MS = 30 * 60 * 1000;
+    let timer: ReturnType<typeof setTimeout>;
+
+    const reset = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        console.info('[212] signed out after 30 minutes idle');
+        getBrowserClient().auth.signOut();
+      }, IDLE_MS);
+    };
+
+    const events = ['pointerdown', 'keydown', 'visibilitychange'] as const;
+    for (const e of events) window.addEventListener(e, reset, { passive: true });
+    reset();
+
+    return () => {
+      clearTimeout(timer);
+      for (const e of events) window.removeEventListener(e, reset);
+    };
+  }, [state.session]);
+
   useEffect(() => {
     const supabase = getBrowserClient();
     let alive = true;

@@ -58,7 +58,7 @@ export default async function HomePage() {
   const heroAlt = rtl
     ? 'أبراج كتارا ومارينا لوسيل عند الغروب'
     : 'The Katara Towers and Lusail Marina at sunset';
-  const heroCommon = { alt: heroAlt, sizes: '100vw', priority: true, quality: 85 };
+  const heroCommon = { alt: heroAlt, sizes: '100vw', priority: true };
   const {
     props: { srcSet: heroWideSrcSet },
   } = getImageProps({
@@ -126,6 +126,32 @@ export default async function HomePage() {
         {/* 88svh rather than 100svh: less height to fill means less side crop, and a
             hero that stops just short of the fold tells the reader the page continues. */}
         <section className="relative min-h-[88svh] w-full overflow-hidden bg-ink">
+          {/*
+            Preload the hero explicitly.
+
+            <Image priority> emits a <link rel="preload"> into the head automatically.
+            getImageProps does NOT — it hands back the props and nothing else — so
+            art-directing the hero through <picture> silently dropped the preload and
+            pushed LCP from 3.1s to 4.2s. The media queries match the <source> rules
+            below exactly, so the browser preloads the one variant it will actually use
+            and never both.
+          */}
+          <link
+            rel="preload"
+            as="image"
+            imageSrcSet={heroWideSrcSet}
+            imageSizes="100vw"
+            media={`(min-width: ${HERO.portraitMaxWidth}px)`}
+            fetchPriority="high"
+          />
+          <link
+            rel="preload"
+            as="image"
+            imageSrcSet={heroPortraitSrcSet}
+            imageSizes="100vw"
+            media={`(max-width: ${HERO.portraitMaxWidth - 1}px)`}
+            fetchPriority="high"
+          />
           <picture>
             <source media={`(min-width: ${HERO.portraitMaxWidth}px)`} srcSet={heroWideSrcSet} />
             <source srcSet={heroPortraitSrcSet} />

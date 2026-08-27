@@ -98,16 +98,25 @@ name, 34 an Arabic description.
 
 Lighthouse, mobile, against a production build:
 
-| | Homepage | Ordering app |
-| --- | --- | --- |
-| Performance | 94 | 87 |
-| Accessibility | 100 | 100 |
-| Best practices | 100 | 100 |
-| SEO | 100 | — |
+| | Homepage | Menu | Ordering app |
+| --- | --- | --- | --- |
+| Performance | 90 | 92 | 92 |
+| Accessibility | 100 | 100 | 100 |
+| Best practices | 100 | 100 | 100 |
+| SEO | 100 | 100 | n/a |
 
-LCP 3.1 s, CLS 0, 483 KB total on the homepage. The Arabic webfont is not preloaded —
-it was 163 KB shipped to every English visitor — so it is fetched only when Arabic is
-actually rendered.
+CLS 0 everywhere. The ordering app scores 63 for SEO purely because it is `noindex` —
+correct for a page reached only by scanning a table's QR code, and not a defect.
+
+The ordering app went from **87 to 92** once the menu stopped being re-queried on every
+request. The homepage went from 94 to 90: the new sunset hero is a far more detailed
+photograph than the terrace shot it replaced, and LCP moved 3.1 s → 3.6 s. AVIF pays most
+of that back — enabling it (`images.formats`, which is **not** on by default in Next 16)
+took the hero from 156 KB to 57 KB at 640px.
+
+The Arabic webfont is still not preloaded — it was 163 KB shipped to every English
+visitor — and is fetched only when Arabic is actually rendered. Verified per locale, not
+assumed: English loads 2 font files, Arabic 4.
 
 ## Security posture
 
