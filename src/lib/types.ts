@@ -10,6 +10,8 @@ export type MenuCategory = {
   name_ar: string;
   slug: string;
   sort_order: number;
+  /** Representative photograph for the homepage category card. Admin-editable. */
+  image_path: string | null;
 };
 
 export type ModifierOption = {
@@ -44,6 +46,12 @@ export type MenuItem = {
   is_available: boolean;
   is_signature: boolean;
   sort_order: number;
+  /**
+   * Where the description came from. `cafe` is the café's own copy, crawled from their
+   * menu; `draft` was written for them and is awaiting the owner's approval. The two
+   * must never be presented as the same thing — see supabase/migrations/0006.
+   */
+  copy_source: 'cafe' | 'draft';
   modifier_groups: ModifierGroup[];
 };
 

@@ -98,6 +98,7 @@ const COPY = {
     en: 'Marina Twin Tower A, 30th Floor, Lusail, Qatar',
     ar: 'برج مارينا التوأم أ، الطابق الثلاثون، لوسيل، قطر',
   },
+  staffSignIn: { en: 'Staff', ar: 'الموظفون' },
 
   // ---- language picker
   chooseLanguage: { en: 'Choose your language', ar: 'اختر لغتك' },

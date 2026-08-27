@@ -40,11 +40,14 @@ export async function getMenu(): Promise<{
   const supabase = getServerClient();
 
   const [categories, items, groups, options, links] = await Promise.all([
-    supabase.from('menu_categories').select('id,name_en,name_ar,slug,sort_order').order('sort_order'),
+    supabase
+      .from('menu_categories')
+      .select('id,name_en,name_ar,slug,sort_order,image_path')
+      .order('sort_order'),
     supabase
       .from('menu_items')
       .select(
-        'id,category_id,sku,name_en,name_ar,description_en,description_ar,price,image_path,is_available,is_signature,sort_order',
+        'id,category_id,sku,name_en,name_ar,description_en,description_ar,price,image_path,is_available,is_signature,sort_order,copy_source',
       )
       .order('sort_order'),
     supabase

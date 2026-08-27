@@ -178,9 +178,20 @@ export function SiteFooter({
         </div>
 
         <div className="rule mt-10" />
-        <p className="mt-5 text-xs text-[var(--muted)]">
-          © {new Date().getFullYear()} 212 Café · {tr('footerAddress')}
-        </p>
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs text-[var(--muted)]">
+            © {new Date().getFullYear()} 212 Café · {tr('footerAddress')}
+          </p>
+          {/*
+            Discreet, but present. There was previously no route to the admin from
+            anywhere on the site, which meant the only way in was to already know the
+            URL — and an unlinked URL is not a security control. RLS is what actually
+            guards /admin: an account without a staff row gets zero rows back.
+          */}
+          <Link href="/admin" className="text-xs text-[var(--muted)]/70 transition-colors hover:text-brass">
+            {tr('staffSignIn')}
+          </Link>
+        </div>
       </div>
     </footer>
   );

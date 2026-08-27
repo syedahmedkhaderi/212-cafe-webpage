@@ -39,6 +39,7 @@ banner() {
   printf "    Kitchen     http://localhost:%s/kitchen\n" "$PORT"
   printf "    QR codes    http://localhost:%s/admin/tables\n" "$PORT"
   printf "\n    %sScan a table QR from /admin/tables to reach the ordering app.%s\n" "$dim" "$off"
+  printf "    %sStaff sign-in is linked from the site footer, and is at /admin.%s\n" "$dim" "$off"
   printf "\n"
 }
 

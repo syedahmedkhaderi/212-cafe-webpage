@@ -6,14 +6,23 @@ A marketing site, QR table-ordering app, kitchen display and admin dashboard for
 Built as a pitch demo against their current system, a white-label SaaS
 ("Softurn Self Order") at `212.smaresto.com`. **All menu content is the café's real
 data**, crawled from that system on 2026-08-26 — real item names, real Arabic names,
-real descriptions, real QAR prices, real photography. Nothing is invented.
-See [`data/FINDINGS.md`](data/FINDINGS.md).
+real QAR prices. See [`data/FINDINGS.md`](data/FINDINGS.md).
+
+Three exceptions, each flagged rather than blended in:
+
+- **19 items had no description.** The café never wrote one. Ours are drafted and
+  marked `copy_source = 'draft'` in the database, so the café's words and ours are
+  never confused. They need the owner's approval.
+- **Six of their product photographs are AI-generated stock**, not pictures of their
+  food — one carries a visible Gemini watermark. None is used on the shopfront now.
+- **The hero is a supplied press photograph**, not the café's own. Its licence is
+  unconfirmed — see below.
 
 ## Surfaces
 
 | Route | Who | What |
 | --- | --- | --- |
-| `/` | Public | Marketing site, hero built on the café's own terrace photography |
+| `/` | Public | Marketing site; hero is a supplied press photo, The View is the café's own |
 | `/menu` | Public | Full bilingual menu, EN/AR with correct RTL |
 | `/order/[tableToken]` | Guest | Scan-to-order: browse, configure, cart, submit, track |
 | `/admin` | Staff | Live orders, today's revenue, top items, sold-out toggles |
@@ -107,6 +116,17 @@ is in [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 ## What still needs the owner
 
+- **Licence confirmation for the hero photograph.** `Katara-Towers-Raffles-Doha.jpg` is
+  an aerial press shot of the towers from outside the building, supplied by the client
+  and of unknown provenance. Confirm it before this is shown to the owner or deployed to
+  a public domain. The café's own terrace shot is kept as a switchable alternative at
+  `/hero/terrace-signature-*`, and is what actually evidences the "Lusail's Best View"
+  claim — it is the view *from* 212, not a picture of the building next door.
+- **A higher-resolution hero original.** The supplied file is 1200×900, which is 2.4×
+  short of what a full-bleed hero needs at 1440px on a 2× display. Nothing is upscaled
+  (that adds bytes, not detail); `node data/optimize-hero.mjs` prints the exact
+  shortfall.
+- **Approval of the 19 drafted descriptions** (`copy_source = 'draft'`).
 - A real logo asset — the incumbent's `brandLogoUrl` 404s and is not their branding
 - Confirmed trading hours (Instagram says 12:00–00:00; Google shows ~12:30–23:00)
 - Sign-off on modifier prices with no counterpart in their data: Size Large (+6),

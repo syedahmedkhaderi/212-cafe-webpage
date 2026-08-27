@@ -1,9 +1,9 @@
-import Image from 'next/image';
+import Image, { getImageProps } from 'next/image';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getBusiness, getMenu } from '@/lib/menu/queries';
 import { clock, dayName, isOpenNow, money } from '@/lib/format';
-import { HERO_IMAGE, INSTAGRAM_URL, MAPS_URL, VIEW_IMAGES } from '@/lib/site';
+import { HERO, HERO_IMAGE, INSTAGRAM_URL, MAPS_URL, VIEW_HERO, VIEW_IMAGES } from '@/lib/site';
 import { SiteFooter, SiteHeader } from '@/components/marketing/SiteChrome';
 import { LanguagePicker } from '@/components/marketing/LanguageSwitch';
 import { SITE_URL } from '@/lib/site-url';
@@ -34,6 +34,26 @@ export default async function HomePage() {
   const available = items.filter((i) => i.is_available);
   const open = isOpenNow(hours);
   const today = hours.find((h) => h.day_of_week === new Date().getDay());
+
+  // ------------------------------------------------------------- hero art direction
+  //
+  // Two purpose-made crops, not one image squeezed by object-position. A 4:3 landscape
+  // inside a near-full-height section on a 9:19.5 phone keeps only the middle ~42% of
+  // the frame — which is exactly the sunset sky and the marina thrown away. The portrait
+  // crop keeps FULL height and trims only peripheral city, so the picture still reads.
+  //
+  // getImageProps is the documented way to art-direct while keeping next/image's AVIF
+  // negotiation and responsive srcSet. <picture> then fetches exactly one of the two.
+  const heroAlt = rtl
+    ? 'أبراج كتارا ومارينا لوسيل عند الغروب'
+    : 'The Katara Towers and Lusail Marina at sunset';
+  const heroCommon = { alt: heroAlt, sizes: '100vw', priority: true, quality: 85 };
+  const {
+    props: { srcSet: heroWideSrcSet },
+  } = getImageProps({ ...heroCommon, src: HERO.wide, width: HERO.width, height: HERO.height });
+  const {
+    props: { srcSet: heroPortraitSrcSet, ...heroImgProps },
+  } = getImageProps({ ...heroCommon, src: HERO.portrait, width: 675, height: 900 });
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -77,26 +97,30 @@ export default async function HomePage() {
 
       <main>
         {/* ---------------------------------------------------------------- hero */}
-        <section className="relative min-h-[100svh] w-full overflow-hidden bg-ink">
-          <Image
-            src={HERO_IMAGE}
-            alt={
-              rtl
-                ? 'مشروب 212 المميز على التراس، وخلفه أبراج كتارا ومارينا لوسيل'
-                : 'A 212 signature coffee on the terrace, with the Katara Towers and Lusail Marina behind'
-            }
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-center opacity-85"
-          />
+        {/* 88svh rather than 100svh: less height to fill means less side crop, and a
+            hero that stops just short of the fold tells the reader the page continues. */}
+        <section className="relative min-h-[88svh] w-full overflow-hidden bg-ink">
+          <picture>
+            <source media={`(min-width: ${HERO.portraitMaxWidth}px)`} srcSet={heroWideSrcSet} />
+            <source srcSet={heroPortraitSrcSet} />
+            {/* alt is repeated after the spread so it is statically visible — both to a
+                reader and to jsx-a11y, which cannot see through the spread. */}
+            <img
+              {...heroImgProps}
+              alt={heroAlt}
+              className="absolute inset-0 h-full w-full object-cover object-center opacity-85"
+            />
+          </picture>
+
+          {/* Two scrims, kept deliberately. The sunset frame is far brighter at the top
+              than the shot it replaces, so the header needs this more, not less. */}
           <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-ink/60 via-transparent to-transparent" />
           <div
             aria-hidden
             className="absolute inset-x-0 bottom-0 h-[85%] bg-gradient-to-t from-ink via-ink/88 to-transparent"
           />
 
-          <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-6xl flex-col justify-end px-5 pb-16 sm:px-8 sm:pb-24">
+          <div className="relative z-10 mx-auto flex min-h-[88svh] max-w-6xl flex-col justify-end px-5 pb-16 sm:px-8 sm:pb-24">
             <p className="eyebrow reveal on-photo text-bone/90">{tr('heroLocation')}</p>
 
             <h1 className="display reveal mt-5 text-bone" style={{ animationDelay: '80ms' }}>
@@ -147,38 +171,54 @@ export default async function HomePage() {
         </section>
 
         {/* ---------------------------------------------------------------- view */}
+        {/*
+          Rebuilt. This previously showed four drink photographs in a 2×2 grid whose
+          aspect ratios alternated (`n % 3 === 0 ? 'aspect-[3/4]' : 'aspect-square'`), so
+          no two tiles lined up — and the four were near-identical frames: same railing,
+          same marble, same towers, same daylight, different drink. A section headed
+          "Lusail's best view" was illustrated with four pictures of cocktails.
+
+          Now it leads with the view itself, and every group below has exactly ONE aspect
+          ratio — which is the entire alignment fix.
+        */}
         <section id="view" className="scroll-mt-20 bg-[var(--bg)] py-24 sm:py-32">
           <div className="mx-auto max-w-6xl px-5 sm:px-8">
-            <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-20">
+            <div className="grid items-center gap-12 lg:grid-cols-[1.45fr_1fr] lg:gap-16">
+              <figure className="relative aspect-[16/9] overflow-hidden rounded-sm bg-sand">
+                <Image
+                  src={VIEW_HERO.src}
+                  alt={rtl ? VIEW_HERO.labelAr : VIEW_HERO.labelEn}
+                  fill
+                  sizes="(max-width: 1024px) 92vw, 660px"
+                  className="object-cover"
+                />
+              </figure>
+
               <div>
                 <p className="eyebrow">{tr('viewEyebrow')}</p>
-                <h2 className="display mt-5 text-[clamp(2.5rem,6vw,4.5rem)]">{tr('viewTitle')}</h2>
-                <p className="mt-7 max-w-md leading-relaxed text-[var(--muted)]">{tr('viewBody1')}</p>
-                <p className="mt-4 max-w-md leading-relaxed text-[var(--muted)]">{tr('viewBody2')}</p>
+                <h2 className="display mt-5 text-[clamp(2.25rem,5vw,3.75rem)]">{tr('viewTitle')}</h2>
+                <p className="mt-6 leading-relaxed text-[var(--muted)]">{tr('viewBody1')}</p>
+                <p className="mt-4 leading-relaxed text-[var(--muted)]">{tr('viewBody2')}</p>
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                {VIEW_IMAGES.map((v, n) => (
-                  <div
-                    key={v.src}
-                    className={`relative overflow-hidden rounded-sm bg-sand ${
-                      n % 3 === 0 ? 'aspect-[3/4]' : 'aspect-square'
-                    }`}
-                  >
-                    <Image
-                      src={v.src}
-                      alt={
-                        rtl
-                          ? `${v.label} على تراس 212 كافيه بإطلالة على مارينا لوسيل`
-                          : `${v.label}, served on the 212 Café terrace overlooking Lusail Marina`
-                      }
-                      fill
-                      sizes="(max-width: 1024px) 45vw, 300px"
-                      className="object-cover transition-transform duration-700 hover:scale-[1.04]"
-                    />
-                  </div>
-                ))}
-              </div>
+            {/* Uniform squares. Three visually distinct frames, not four variations on one. */}
+            <div className="mt-10 grid grid-cols-3 gap-3 sm:gap-4">
+              {VIEW_IMAGES.map((v) => (
+                <figure key={v.src} className="group relative aspect-square overflow-hidden rounded-sm bg-sand">
+                  <Image
+                    src={v.src}
+                    alt={
+                      rtl
+                        ? `${v.labelAr} على تراس ٢١٢ كافيه بإطلالة على مارينا لوسيل`
+                        : `${v.label}, served on the 212 Café terrace overlooking Lusail Marina`
+                    }
+                    fill
+                    sizes="(max-width: 640px) 31vw, (max-width: 1024px) 30vw, 340px"
+                    className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                  />
+                </figure>
+              ))}
             </div>
           </div>
         </section>
@@ -198,7 +238,23 @@ export default async function HomePage() {
                   const description = localised(item, 'description', locale);
                   return (
                     <article key={item.id} className="group">
-                      <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-ink-soft">
+                      {/*
+                        3:4, uniform — and deliberately NOT each image's natural ratio.
+
+                        aspect-[4/5] mangled the two landscape AI frames that used to sit
+                        here: only the middle ~35% of an already-wide image survived. But
+                        those images are gone, and of the five signatures now left, four
+                        are EXACTLY 3:4 — so this crops nothing on them. The fifth (the
+                        3 Layers, 778×1374) keeps 75% of its height, which still shows all
+                        three layers and the chocolate on top; checked, not assumed.
+
+                        Natural ratios were the other option, and were tried: one image
+                        200px taller than its neighbours pulls every name and price off
+                        the baseline, which is the same "nothing lines up" problem this
+                        redesign exists to fix. Alignment wins here because the crop is
+                        now free.
+                      */}
+                      <div className="relative aspect-[3/4] overflow-hidden rounded-sm bg-ink-soft">
                         {item.image_path && (
                           <Image
                             src={item.image_path}
@@ -246,7 +302,13 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="mt-14 grid gap-px overflow-hidden rounded-sm border border-[var(--line)] bg-[var(--line)] sm:grid-cols-2 lg:grid-cols-3">
+            {/*
+              Photo-led. These were sparse text cards on a large field of empty cream —
+              six boxes advertising a menu whose whole strength is its photography. Each
+              card now carries a representative image with a gradient foot; the category
+              image is a column on menu_categories, so the owner can change it.
+            */}
+            <div className="mt-14 grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
               {categories.map((c) => {
                 const inCategory = available.filter((i) => i.category_id === c.id);
                 if (inCategory.length === 0) return null;
@@ -255,26 +317,46 @@ export default async function HomePage() {
                   <Link
                     key={c.id}
                     href={`/menu#${c.slug}`}
-                    className="group flex flex-col justify-between bg-[var(--card)] p-8 transition-colors hover:bg-bone-dim"
+                    className="group relative flex aspect-[4/5] flex-col justify-end overflow-hidden rounded-sm bg-ink"
                   >
-                    <div>
-                      <h3 className="display text-3xl">{localised(c, 'name', locale)}</h3>
-                      {/* the other language, quietly, as a second line */}
-                      <p
-                        className="mt-2 text-sm text-[var(--muted)]"
-                        dir={rtl ? 'ltr' : 'rtl'}
-                        lang={rtl ? 'en' : 'ar'}
-                      >
-                        {rtl ? c.name_en : c.name_ar}
+                    {c.image_path && (
+                      <Image
+                        src={c.image_path}
+                        alt=""
+                        aria-hidden
+                        fill
+                        sizes="(max-width: 640px) 92vw, (max-width: 1024px) 46vw, 360px"
+                        className="object-cover transition-transform duration-700 group-hover:scale-[1.05]"
+                      />
+                    )}
+                    <div
+                      aria-hidden
+                      className="absolute inset-0 bg-gradient-to-t from-ink via-ink/45 to-ink/5"
+                    />
+
+                    <div className="relative z-10 p-6 text-bone sm:p-7">
+                      <h3 className="display on-photo text-3xl">{localised(c, 'name', locale)}</h3>
+                      {/*
+                        The other language, quietly, as a second line. `dir` sits on the
+                        span rather than the paragraph on purpose: on the paragraph it
+                        also sets the text alignment, which threw this line to the far
+                        edge of the card, away from the title it belongs to. On the span
+                        the bidi run is still shaped correctly while the paragraph stays
+                        aligned to the page direction.
+                      */}
+                      <p className="on-photo mt-1.5 text-sm text-bone/70">
+                        <span dir={rtl ? 'ltr' : 'rtl'} lang={rtl ? 'en' : 'ar'}>
+                          {rtl ? c.name_en : c.name_ar}
+                        </span>
                       </p>
-                    </div>
-                    <div className="mt-10 flex items-center justify-between text-sm">
-                      <span className="text-[var(--muted)]">
-                        {inCategory.length} {tr('itemsCount')}
-                      </span>
-                      <span className="tabular text-brass-ink">
-                        {tr('from')} <span dir="ltr">{money(from)}</span>
-                      </span>
+                      <div className="mt-5 flex items-center justify-between border-t border-bone/20 pt-4 text-sm">
+                        <span className="on-photo text-bone/75">
+                          {inCategory.length} {tr('itemsCount')}
+                        </span>
+                        <span className="tabular on-photo text-brass-lit">
+                          {tr('from')} <span dir="ltr">{money(from)}</span>
+                        </span>
+                      </div>
                     </div>
                   </Link>
                 );

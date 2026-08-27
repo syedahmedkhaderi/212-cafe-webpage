@@ -40,15 +40,22 @@ reliable path.
 | Salads | 3 | 34–38 (+10 extras) |
 
 - **All 56 have Arabic names** (stored in `product_custom_field1`).
-- **34 have bilingual `EN:`/`AR:` descriptions**; 22 have none.
+- **34 have bilingual `EN:`/`AR:` descriptions**; 22 have none — **19 of them sellable
+  items**, including the signature "the 3 Layers". Drafted copy now fills those 19,
+  flagged `copy_source = 'draft'` and awaiting the owner's approval.
 - **4 are inactive**: Cheese Croissant, Chocolate Croissant, Plain Croissant, Green Shakshooka.
 - **No modifiers or variations exist.** Every product is a flat `DUMMY` variation.
   Size/milk/extras are faked as separate line items: "Extra Milk – 3.00", "Extras – 10.00".
 - **Display order unknown** — no categories endpoint; `menu.json` order is API insertion
   order. Derive `sort_order` from `category.id` and check against the live page.
 
-Signature items to feature: **212-Signature (36)**, **the 3 Layers (36)**,
+Signature items as the café flags them: **212-Signature (36)**, **the 3 Layers (36)**,
 **Eggs Benedict (52)**, **The French Toast (50)**, **Brownies Chocolate Bomb (45)**.
+
+⚠️ Eggs Benedict and The French Toast are **not featured on our site**: both are
+illustrated with AI-generated stock rather than photographs of their food (see the image
+audit below). They are replaced in the signature lineup by **Hiby Splash (29)** and
+**Mango Red Horizon**, which the café genuinely shot on its own terrace.
 
 ---
 
@@ -75,6 +82,40 @@ Signature items to feature: **212-Signature (36)**, **the 3 Layers (36)**,
 | One espresso shot | Double Espresso, Single Espresso | 222 KB |
 | Vendor placeholder | Cheese / Chocolate / Plain Croissant | 6 KB |
 | One milk shot | Extra Milk -, Extra Milk | 1.99 MB |
+
+### Six images are AI-generated, not photographs of their food
+
+Six of the 56 crawled images were not taken in the café. They are generated stock:
+
+| Item | File |
+| --- | --- |
+| The French Toast | `0052-the-french-toast` |
+| Eggs Benedict | `0066-eggs-benedict` |
+| Penne Pasta | `0076-penne-pasta` |
+| Extra Milk ×2 | `0217-extra-milk`, `0218-extra-milk` |
+| Extras | `0219-extras` |
+
+**What was verified, precisely** — this matters, because the strong version of the claim
+is not the one the evidence supports:
+
+- All six share an identical **1408×768** source frame. That is a generation aspect
+  ratio, not one any camera produces, and no other image in the set is that size.
+- **`0052-the-french-toast` carries a visible Google Gemini sparkle watermark** in the
+  bottom-right corner. Confirmed by cropping and inspecting that region.
+- **The other five show no visible watermark.** They are identified by frame size and by
+  shared visual grammar — rustic wood table, shallow depth of field, and a European café
+  interior that looks nothing like a 30th-floor room with floor-to-ceiling marina glass.
+- `0066-eggs-benedict` contains a mug with a garbled **"212 café"** rendered onto it —
+  the generator's attempt at their branding.
+
+⚠️ **Say it that way.** "One is watermarked, and five more share its exact generated
+frame" is verifiable and damning enough. "All six are watermarked" is not true and would
+be caught.
+
+Two of these — Eggs Benedict and The French Toast — were **signature items**, so the
+café's shopfront was leading with pictures of food that isn't theirs. Both have been
+dropped from the signature lineup (`supabase/migrations/0006`), replaced by items they
+genuinely photographed on their own terrace.
 
 ### Two specific absurdities
 

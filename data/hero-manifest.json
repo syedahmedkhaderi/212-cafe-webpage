@@ -1,0 +1,71 @@
+[
+  {
+    "key": "katara-sunset",
+    "note": "Aerial press photograph of the Katara Towers at sunset. Licence UNCONFIRMED.",
+    "source": {
+      "path": "/Users/syed/Downloads/Katara-Towers-Raffles-Doha.jpg",
+      "width": 1200,
+      "height": 900
+    },
+    "wide": {
+      "path": "/hero/katara-sunset-wide.webp",
+      "width": 1200,
+      "height": 900,
+      "bytes": 321244
+    },
+    "portrait": {
+      "path": "/hero/katara-sunset-portrait.webp",
+      "width": 675,
+      "height": 900,
+      "bytes": 192208,
+      "crop": {
+        "left": 239,
+        "top": 0,
+        "width": 675,
+        "height": 900
+      }
+    }
+  },
+  {
+    "key": "terrace-signature",
+    "note": "The café's own terrace shot — the skyline seen from 212. Admin-switchable alternative.",
+    "source": {
+      "path": "/Users/syed/Downloads/212-cafe/data/images/0016-212-signature.jfif",
+      "width": 896,
+      "height": 1195
+    },
+    "wide": {
+      "path": "/hero/terrace-signature-wide.webp",
+      "width": 896,
+      "height": 1195,
+      "bytes": 119388
+    },
+    "portrait": {
+      "path": "/hero/terrace-signature-portrait.webp",
+      "width": 896,
+      "height": 1195,
+      "bytes": 119388,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 896,
+        "height": 1195
+      }
+    }
+  },
+  {
+    "key": "terrace-view",
+    "note": "The view from the terrace, cropped from the café's own photography.",
+    "source": {
+      "path": "/Users/syed/Downloads/212-cafe/data/images/0208-hiby-splash.jpeg",
+      "width": 1086,
+      "height": 1448
+    },
+    "wide": {
+      "path": "/hero/terrace-view-wide.webp",
+      "width": 1086,
+      "height": 611,
+      "bytes": 29646
+    }
+  }
+]
