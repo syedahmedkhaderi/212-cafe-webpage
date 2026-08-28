@@ -13,10 +13,12 @@ import { ItemPlaceholder } from '@/components/menu/ItemPlaceholder';
 import { ItemSheet } from './ItemSheet';
 import { CartSheet } from './CartSheet';
 import { OrderTracker } from './OrderTracker';
+import { seatLabel, type TableKind } from '@/lib/order/seat-label';
 
 type Props = {
   tableToken: string;
   tableLabel: string;
+  tableKind?: TableKind;
   categories: MenuCategory[];
   items: MenuItem[];
   /** Resolved server-side from the shared locale cookie. */
@@ -31,7 +33,7 @@ type Props = {
  * here is this surface's own chrome: the table header, the category rail and the item
  * list.
  */
-export function OrderApp({ tableToken, tableLabel, categories, items, initialLocale }: Props) {
+export function OrderApp({ tableToken, tableLabel, tableKind, categories, items, initialLocale }: Props) {
   const [locale, setLocale] = useState<Locale>(initialLocale);
 
   // Toggling here writes the same cookie the marketing site reads, so the choice
@@ -77,6 +79,7 @@ export function OrderApp({ tableToken, tableLabel, categories, items, initialLoc
         status={status}
         total={total}
         tableLabel={tableLabel}
+        tableKind={tableKind}
         locale={locale}
         variant="page"
         onNewOrder={order.clearPlaced}
@@ -97,7 +100,7 @@ export function OrderApp({ tableToken, tableLabel, categories, items, initialLoc
           <div>
             <span className="display text-xl leading-none">212</span>
             <span className="ms-3 text-[0.78rem] text-[var(--muted)]">
-              {t('Table', 'طاولة')} {tableLabel}
+              {seatLabel(tableKind, tableLabel, locale)}
             </span>
           </div>
           <button

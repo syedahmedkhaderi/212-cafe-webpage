@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { resolveTableToken } from './table';
+import { getWalkInTable } from './walk-in';
 
 /**
  * The guest's table, carried from the QR scan.
@@ -19,20 +20,38 @@ export const TABLE_COOKIE = '212_table';
  *  a table does not stay authorised to order against it tomorrow. */
 export const TABLE_COOKIE_MAX_AGE = 60 * 60 * 4;
 
-export type CurrentTable = { token: string; label: string };
+/**
+ * `kind` is what the UI needs to tell two very different guests apart:
+ *
+ *   'table'   — scanned the code at seat 07. Their order goes to that table.
+ *   'walk_in' — never scanned anything. Ordering is still open to them, but nobody
+ *               knows where to bring it, so the UI must ask rather than announce
+ *               "You're at Table 07".
+ */
+export type CurrentTable = { token: string; label: string; kind: 'table' | 'walk_in' };
 
 export async function currentTable(): Promise<CurrentTable | null> {
   const token = (await cookies()).get(TABLE_COOKIE)?.value;
 
-  // The common case by far. /menu is a public page that mostly serves people who never
-  // scanned anything, and they must not pay for a database round trip to find that out.
-  if (!token) return null;
+  if (token) {
+    // Re-resolved on every render rather than trusted from the cookie, so a token the
+    // manager rotates or revokes stops working on the guest's next page load instead of
+    // when the cookie happens to expire.
+    const table = await resolveTableToken(token);
+    if (table) return { token, label: table.label, kind: 'table' };
+  }
 
-  // Re-resolved on every render rather than trusted from the cookie, so a token the
-  // manager rotates or revokes stops working on the guest's next page load instead of
-  // when the cookie happens to expire.
-  const table = await resolveTableToken(token);
-  if (!table) return null;
+  /*
+    No table, but ordering is no longer QR-only: fall back to the 'Online' table from
+    migration 0012 so the shopfront and the menu can take an order from someone who
+    walked past the window.
 
-  return { token, label: table.label };
+    This used to return null here without touching the database. That fast path is
+    preserved by getWalkInTable() being cached, so the common case is a cache read
+    rather than a query on every anonymous view of a force-dynamic page.
+  */
+  const walkIn = await getWalkInTable();
+  if (!walkIn) return null;
+
+  return { token: walkIn.token, label: walkIn.label, kind: 'walk_in' };
 }

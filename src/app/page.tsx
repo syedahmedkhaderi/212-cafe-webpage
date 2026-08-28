@@ -214,9 +214,18 @@ export default async function HomePage() {
                 style={{ animationDelay: '200ms' }}
               >
                 <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-brass-lit" />
-                {rtl
-                  ? `أنت على الطاولة ${table.label} — اطلب من القائمة`
-                  : `You're at Table ${table.label}, order straight from the menu`}
+                {/*
+                  A walk-in guest has no table, so the scanned-table wording would be a
+                  lie to most of the people who now see this line. Both branches still
+                  say the same useful thing: ordering is open from here.
+                */}
+                {table.kind === 'walk_in'
+                  ? rtl
+                    ? 'اطلب من القائمة مباشرة'
+                    : 'Order online, straight from the menu'
+                  : rtl
+                    ? `أنت على الطاولة ${table.label}، اطلب من القائمة`
+                    : `You're at Table ${table.label}, order straight from the menu`}
               </p>
             )}
 

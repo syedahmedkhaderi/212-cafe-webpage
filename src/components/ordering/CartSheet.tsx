@@ -4,6 +4,7 @@ import type { CartLine, Locale } from '@/lib/types';
 import { money } from '@/lib/format';
 import { cartSubtotal, lineTotal } from '@/lib/order/cart';
 import { useBodyScrollLock } from './useBodyScrollLock';
+import { seatLabel, type TableKind } from '@/lib/order/seat-label';
 
 /**
  * Review the cart and send it.
@@ -15,6 +16,7 @@ export function CartSheet({
   cart,
   locale,
   tableLabel,
+  tableKind,
   placing,
   error,
   customerName,
@@ -26,6 +28,7 @@ export function CartSheet({
   cart: CartLine[];
   locale: Locale;
   tableLabel: string;
+  tableKind?: TableKind;
   placing: boolean;
   error: string | null;
   customerName: string;
@@ -50,7 +53,7 @@ export function CartSheet({
         <div className="flex items-center justify-between">
           <h2 className="display text-2xl">{t('Your order', 'طلبك')}</h2>
           <span className="text-[0.78rem] text-[var(--muted)]">
-            {t('Table', 'طاولة')} {tableLabel}
+            {seatLabel(tableKind, tableLabel, locale)}
           </span>
         </div>
 

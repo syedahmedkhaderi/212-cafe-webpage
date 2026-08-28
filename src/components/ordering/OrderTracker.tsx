@@ -3,6 +3,7 @@
 import type { Locale, OrderStatus } from '@/lib/types';
 import { money } from '@/lib/format';
 import { useBodyScrollLock } from './useBodyScrollLock';
+import { seatLabel, type TableKind } from '@/lib/order/seat-label';
 
 export const STEPS = ['received', 'preparing', 'ready', 'served'] as const;
 
@@ -38,6 +39,7 @@ export function OrderTracker({
   status,
   total,
   tableLabel,
+  tableKind,
   locale,
   variant = 'page',
   onNewOrder,
@@ -47,6 +49,7 @@ export function OrderTracker({
   status: OrderStatus;
   total: number | null;
   tableLabel: string;
+  tableKind?: TableKind;
   locale: Locale;
   variant?: 'page' | 'sheet';
   onNewOrder?: () => void;
@@ -59,7 +62,7 @@ export function OrderTracker({
   const body = (
     <div className="w-full max-w-sm">
       <p className="eyebrow">
-        {t('Table', 'طاولة')} {tableLabel}
+        {seatLabel(tableKind, tableLabel, locale)}
       </p>
       <h1 className="display mt-3 text-5xl">{t('Thank you', 'شكراً لك')}</h1>
       {/* Order number and price are Latin runs; isolating them with dir="ltr" keeps

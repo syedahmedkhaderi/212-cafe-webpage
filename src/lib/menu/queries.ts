@@ -1,6 +1,7 @@
 import { unstable_cache } from 'next/cache';
 import { getServerClient } from '@/lib/supabase/server';
 import { TAGS } from '@/lib/cache-tags';
+import { hasUsablePhoto } from '@/lib/site';
 import type {
   BusinessHours,
   BusinessSettings,
@@ -141,13 +142,36 @@ async function fetchMenu(): Promise<{
   // Postgres numeric arrives as a string over PostgREST; coerce once, here.
   type RawItem = Omit<MenuItem, 'modifier_groups' | 'price'> & { price: string | number };
 
+  const allItems = ((items.data ?? []) as RawItem[]).map((i) => ({
+    ...i,
+    price: num(i.price),
+    modifier_groups: groupsByItem.get(i.id) ?? [],
+  }));
+
+  /*
+    Owner's decision: items without a showable photograph are hidden from the guest
+    surfaces entirely, rather than rendered as a drawn ItemPlaceholder card.
+
+    `hasUsablePhoto()` is the SAME predicate the placeholder used, so this removes
+    exactly the twelve items that were previously photo-less: nine whose photograph is a
+    duplicate standing in for several drinks, and three whose photograph is AI-generated
+    stock. That includes Cappucino, Flat White, Spanish Latte, Single Espresso, Green Tea
+    and Chamomile Tea, so the hidden set is not marginal — it is asked for deliberately,
+    and the twelve remain in the database and in the CMS.
+
+    Filtered HERE and not in the components because this one function feeds every guest
+    surface (`/`, `/menu`, `/order/[tableToken]`). Hiding a card in the menu while the
+    ordering app still listed the item would let a guest add something the menu says does
+    not exist. Admin does not call getMenu(), so /admin/content still sees all 53 and the
+    owner can restore any of them by supplying a real photograph.
+  */
+  const visibleItems = allItems.filter(hasUsablePhoto);
+  const usedCategoryIds = new Set(visibleItems.map((i) => i.category_id));
+
   return {
-    categories: (categories.data ?? []) as MenuCategory[],
-    items: ((items.data ?? []) as RawItem[]).map((i) => ({
-      ...i,
-      price: num(i.price),
-      modifier_groups: groupsByItem.get(i.id) ?? [],
-    })),
+    // A category whose every item was hidden would otherwise render as an empty heading.
+    categories: ((categories.data ?? []) as MenuCategory[]).filter((c) => usedCategoryIds.has(c.id)),
+    items: visibleItems,
   };
 }
 

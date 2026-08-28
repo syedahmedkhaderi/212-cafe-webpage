@@ -15,7 +15,7 @@ import { ItemSheet } from '@/components/ordering/ItemSheet';
 import { CartSheet } from '@/components/ordering/CartSheet';
 import { OrderTracker, statusLabel } from '@/components/ordering/OrderTracker';
 
-export type MenuTable = { token: string; label: string };
+export type MenuTable = { token: string; label: string; kind?: 'table' | 'walk_in' };
 
 type Props = {
   categories: MenuCategory[];
@@ -195,6 +195,7 @@ function OrderableMenu({
           cart={order.cart}
           locale={locale}
           tableLabel={table.label}
+          tableKind={table.kind}
           placing={order.placing}
           error={order.error}
           customerName={order.customerName}
@@ -218,6 +219,7 @@ function OrderableMenu({
           status={status}
           total={total}
           tableLabel={table.label}
+          tableKind={table.kind}
           locale={locale}
           variant="sheet"
           onClose={() => setTrackerOpen(false)}
@@ -295,10 +297,15 @@ function MenuShell({
              dot carries the accent instead, where contrast does not apply. */
           <p className="mt-6 inline-flex items-center gap-2.5 rounded-full border border-brass/35 bg-brass/8 px-4 py-2 text-[0.82rem] text-[var(--fg)]">
             <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-brass" />
+            {/* A walk-in guest is not "ordering for Table Online". Say what is true. */}
             {ordering
-              ? rtl
-                ? `تطلب لطاولة ${table.label}`
-                : `Ordering for Table ${table.label}`
+              ? table.kind === 'walk_in'
+                ? rtl
+                  ? 'تطلب عبر الإنترنت'
+                  : 'Ordering online'
+                : rtl
+                  ? `تطلب لطاولة ${table.label}`
+                  : `Ordering for Table ${table.label}`
               : rtl
                 ? 'الطلب متوقف مؤقتاً'
                 : 'Ordering is paused right now'}
